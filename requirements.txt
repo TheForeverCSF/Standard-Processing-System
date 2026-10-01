@@ -1,0 +1,20 @@
+# 桌面模式（可选）：pip install PyQt6 PyQt6-WebEngine
+# PyQt6>=6.6.0
+python-docx>=1.1.0
+openpyxl>=3.1.0
+PyMuPDF>=1.23.0
+pdfplumber>=0.10.0
+paddlepaddle>=2.6.0
+paddleocr>=2.7.0
+pytesseract>=0.3.10
+pywin32>=306; platform_system=="Windows"
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+pillow>=10.0.0
+lxml>=4.9.0
+customtkinter>=5.2.0
+# 可选通知库（如失败则无通知，不影响主功能）
+win10toast>=0.9; platform_system=="Windows"
+
+
+

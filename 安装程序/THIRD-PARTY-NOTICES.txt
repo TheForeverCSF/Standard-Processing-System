@@ -1,0 +1,174 @@
+标准处理系统 第三方组件与许可声明
+THIRD-PARTY NOTICES
+程序版本：2.0.0
+生成日期：2026-09-30
+
+一、说明
+本发行包（安装包 zip 与安装后的程序目录）内含下列第三方组件。各组件版权归其各自权利人所有，
+均按其原始许可证分发。许可证全文见本目录下 licenses\ 子目录；随 Web 前端分发的数据文件
+（PDF.js、Adobe CMap、Foxit 字体）的原始许可文件同时保留在 web\ 对应子目录中。
+licenses\ 内文本均为逐字节复制的原始文本，未作改写；随包组件清单依包内实际内容核对
+（exe 内模块归档 + _internal 文件 + 各发行版元数据），不列未随包分发的组件。
+
+二、重点第三方组件
+ 1) Qt 6.11.2 —— The Qt Company Ltd.
+    文件：_internal\PyQt6\Qt6\bin\Qt6*.dll 等
+    许可证：LGPL-3.0（另有商业许可可选）→ licenses\LGPL-3.0.txt
+    替换库权利说明（LGPL-3.0 关于替换/重新链接的要求）：
+      Qt 以独立动态库（DLL）形式随本程序分发，程序未对其设置任何阻止替换的技术措施。
+      你可以用自行编译的、接口兼容的同版本 Qt 6.11.2 库替换这些 DLL，替换后本程序仍可正常运行。
+      Qt 源码：https://code.qt.io/    官方二进制：https://download.qt.io/
+
+ 2) PyQt6 6.11.0 / PyQt6-Qt6 6.11.2 / PyQt6-WebEngine 6.11.0 / PyQt6-WebEngine-Qt6 6.11.2
+    / PyQt6-sip 13.12.0 —— Riverbank Computing Limited
+    许可证：GPL-3.0（另有商业许可可选）→ licenses\GPL-3.0.txt
+    sip 部分：licenses\PyQt6-sip-LICENSE.txt
+
+ 3) Qt WebEngine（内嵌 Chromium 140.0.7339.225）—— The Qt Company Ltd. / The Chromium Authors
+    文件：_internal\PyQt6\Qt6\bin\Qt6WebEngineCore.dll（194 MB）、QtWebEngineProcess.exe 等
+    许可证：LGPL-3.0 及 Chromium 项目的 BSD-3-Clause 等多项许可
+    许可汇编：licenses\Chromium-LICENSE.html（14.5 MB，Chromium 全量第三方许可清单；
+      取自与 Qt 内嵌版本同分支（Chromium 140.0.7339.x）的 Chromium 官方发行包，未作改写）
+    Chromium 自身代码许可：licenses\Chromium-BSD3-LICENSE.txt（BSD-3 原文）
+
+ 4) PyMuPDF 1.28.2（内含 MuPDF 1.28.2）—— Artifex Software, Inc.
+    文件：_internal\pymupdf\mupdfcpp64.dll、_mupdf.pyd
+    许可证：AGPL-3.0（另有 Artifex 商业许可可选）
+      → licenses\AGPL-3.0.txt 、 licenses\PyMuPDF-COPYING.txt
+    源码获取（AGPL-3.0 要求向使用者提供对应源代码）：
+      https://github.com/pymupdf/PyMuPDF （版本 1.28.2 及内置 MuPDF 对应版本）
+
+ 5) PDF.js 4.10.38 —— Mozilla Foundation 及贡献者
+    文件：web\pdf.min.mjs 、 web\pdf.worker.min.mjs
+    许可证：Apache-2.0 → licenses\Apache-2.0.txt （原始许可文件：web\LICENSE）
+
+ 6) Adobe CMap 数据（web\cmaps\ 下 168 个 .bcmap）
+    权利人：Adobe Systems Incorporated
+    许可证：→ licenses\Adobe-CMap-License.txt （原始许可文件：web\cmaps\LICENSE）
+
+ 7) Foxit 标准字体（web\standard_fonts\ 下 10 个 .pfb）
+    许可证：→ licenses\Foxit-Standard-Fonts-License.txt
+      （原始许可文件：web\standard_fonts\LICENSE_FOXIT）
+
+ 8) Pillow 12.3.0 —— Pillow 贡献者
+    许可证：MIT-CMU → licenses\Pillow-LICENSE.txt（含其内置组件许可说明）
+
+ 9) Tesseract OCR 5.5.0（安装包内附带，供用户可选安装）—— Tesseract OCR 项目
+    许可证：Apache-2.0 → licenses\Tesseract-LICENSE.txt
+
+三、其他随包的 Python 第三方组件（共 30 个）
+  · bcrypt                 5.0.0        Apache-2.0
+      许可证全文：licenses\bcrypt-LICENSE.txt
+  · beautifulsoup4         4.15.0       MIT License
+      许可证全文：licenses\beautifulsoup4-LICENSE-2.txt、licenses\beautifulsoup4-LICENSE.txt
+  · certifi                2026.7.22    MPL-2.0
+      许可证全文：licenses\certifi-LICENSE.txt
+  · chardet                7.6.0        0BSD
+      许可证全文：licenses\chardet-LICENSE.txt
+  · charset-normalizer     3.5.1        MIT
+      许可证全文：licenses\charset-normalizer-LICENSE.txt
+  · cryptography           50.0.1       Apache-2.0 OR BSD-3-Clause
+      许可证全文：licenses\cryptography-LICENSE-2.txt、licenses\cryptography-LICENSE-3.txt、licenses\cryptography-LICENSE.txt
+  · defusedxml             0.7.1        PSFL
+      许可证全文：licenses\defusedxml-LICENSE.txt
+  · et_xmlfile             2.0.0        MIT
+      许可证全文：licenses\et_xmlfile-LICENSE-2.txt、licenses\et_xmlfile-LICENSE-3.txt、licenses\et_xmlfile-LICENSE.txt
+  · fonttools              4.65.0       MIT
+      许可证全文：licenses\fonttools-LICENSE-2.txt、licenses\fonttools-LICENSE.txt
+  · idna                   3.20         BSD-3-Clause
+      许可证全文：licenses\idna-LICENSE.txt
+  · lxml                   6.1.3        BSD-3-Clause
+      许可证全文：licenses\lxml-LICENSE-2.txt、licenses\lxml-LICENSE.txt
+  · numpy                  2.3.5        BSD License
+      许可证全文：licenses\numpy-LICENSE.txt
+  · openpyxl               3.1.5        MIT
+      许可证全文：licenses\openpyxl-LICENSE.txt
+  · packaging              26.3         Apache-2.0 OR BSD-2-Clause
+      许可证全文：licenses\packaging-LICENSE-2.txt、licenses\packaging-LICENSE-3.txt、licenses\packaging-LICENSE.txt
+  · pdfminer.six           20260107     MIT
+      许可证全文：licenses\pdfminer.six-LICENSE.txt
+  · pdfplumber             0.11.10      MIT License
+      许可证全文：licenses\pdfplumber-LICENSE.txt
+  · platformdirs           4.11.12      MIT
+      许可证全文：licenses\platformdirs-LICENSE.txt
+  · psutil                 7.2.2        BSD-3-Clause
+      许可证全文：licenses\psutil-LICENSE.txt
+  · pygame                 2.6.1        LGPL
+      许可证全文：licenses\pygame-LGPL-2.1.txt
+  · pypdfium2              5.13.0       BSD-3-Clause, Apache-2.0, dependency licenses
+      许可证全文：licenses\pypdfium2-LICENSE-2.txt、licenses\pypdfium2-LICENSE-3.txt、licenses\pypdfium2-LICENSE-4.txt、licenses\pypdfium2-LICENSE.txt
+  · pytesseract            0.3.13       Apache License 2.0
+      许可证全文：licenses\pytesseract-LICENSE.txt
+  · python-docx            1.2.0        MIT
+      许可证全文：licenses\python-docx-LICENSE.txt
+  · pywin32                312          PSF
+      许可证全文：licenses\pywin32-LICENSE-2.txt、licenses\pywin32-LICENSE-3.txt、licenses\pywin32-LICENSE-4.txt、licenses\pywin32-LICENSE.txt
+  · PyYAML                 6.0.2        MIT
+      许可证全文：licenses\PyYAML-LICENSE.txt
+  · requests               2.34.2       Apache-2.0
+      许可证全文：licenses\requests-LICENSE-2.txt、licenses\requests-LICENSE.txt
+  · soupsieve              2.9.2        MIT
+      许可证全文：licenses\soupsieve-LICENSE.txt
+  · threadpoolctl          3.7.0        BSD-3-Clause
+      许可证全文：licenses\threadpoolctl-LICENSE.txt
+  · urllib3                2.8.0        MIT
+      许可证全文：licenses\urllib3-LICENSE.txt
+  · win10toast             0.9          BSD
+      许可证全文：licenses\win10toast-LICENSE.txt
+  · winsdk                 1.0.0b10     MIT
+      许可证全文：licenses\winsdk-LICENSE.txt
+
+三·二、随包的原生库（C/C++ 动态库；含 Qt 内嵌的第三方组件）
+  组件 | 随包文件 | 许可 | 许可文本
+  OpenSSL 3.x | libcrypto-3.dll / libssl-3.dll / _ssl.pyd / _hashlib.pyd | Apache-2.0 | licenses\Apache-2.0.txt
+  zlib 1.x | zlib1.dll（顶层与 pygame 各一份） | zlib | licenses\zlib-LICENSE.txt
+  libpng 1.6.37 | libpng16-16.dll | libpng | licenses\libpng-LICENSE.txt
+  IJG libjpeg v9 | libjpeg-9.dll | IJG 许可（非 turbo 版） | licenses\libjpeg-IJG-README.txt
+  FreeType | freetype.dll / SDL2_ttf.dll / qwindows.dll 等 | FTL（另有 GPLv2 可选） | licenses\FreeType-FTL.txt
+  LibTIFF | libtiff-5.dll / qtiff.dll | libtiff（BSD 风格） | licenses\libtiff-LICENSE.txt
+  libwebp | libwebp-7.dll / qwebp.dll | BSD-3 + 专利授权 | licenses\libwebp-COPYING.txt、libwebp-PATENTS.txt
+  SDL2 / SDL2_image / SDL2_mixer / SDL2_ttf | SDL2*.dll | zlib | licenses\SDL2*-LICENSE.txt
+  libmodplug | libmodplug-1.dll | 公共领域（Public Domain） | licenses\libmodplug-COPYING.txt
+  libogg / libopus / libopusfile | libogg-0.dll / libopus-0.dll / libopusfile-0.dll | BSD-3 | licenses\libogg-COPYING.txt、libopus-COPYING.txt、libopusfile-COPYING.txt
+  PortMidi | portmidi.dll | MIT | licenses\portmidi-license.txt
+  OpenBLAS | numpy.libs\libscipy_openblas64_*.dll | BSD-3 | licenses\OpenBLAS-LICENSE.txt
+  libffi | libffi-8.dll / _ctypes.pyd | MIT | licenses\libffi-LICENSE.txt
+  Expat | pyexpat.pyd / _elementtree.pyd（静态内嵌） | MIT | licenses\Expat-COPYING.txt
+  ICU | PyQt6\Qt6\resources\icudtl.dat（本体静态编入 Qt/WebEngine） | Unicode-3.0 | licenses\ICU-LICENSE.txt
+  Tcl/Tk 8.6 | tcl86t.dll / tk86t.dll | Tcl/Tk 许可 | licenses\Tcl-Tk-license.terms.txt
+  SQLite | sqlite3.dll / _sqlite3.pyd | 公共领域（Public Domain） | 见 https://sqlite.org/copyright.html
+  Mesa 3D（llvmpipe 软件 OpenGL） | PyQt6\Qt6\bin\opengl32sw.dll | MIT 为主（另含 SGI-B 等） | ⚠ 待补（见第六节第 5 条）
+  Microsoft VC++ 运行库 | VCRUNTIME140*.dll / MSVCP140*.dll | 微软可再发行条款（非开源许可） | 按 Visual Studio 许可条款分发，见第六节第 5 条
+  Tesseract OCR 5.5.0 | tesseract-ocr-w64-setup-5.5.0.20241111.exe | Apache-2.0 | licenses\Tesseract-LICENSE.txt（其内置依赖由该安装包自带）
+
+四、安装器自身额外使用的组件（随安装程序分发，不在应用包内）
+ · pywebview 6.2.1 —— BSD-3-Clause → licenses\pywebview-LICENSE.txt
+ · pythonnet 3.1.0、clr_loader 0.3.1 —— MIT → licenses\pythonnet-LICENSE.txt、licenses\clr_loader-LICENSE.txt
+ · PyInstaller 6.22.3 引导程序（bootloader）—— GPL-2.0 及 bootloader exception
+   → licenses\PyInstaller-COPYING.txt（依该例外，打包产物不受 GPL 传染）
+
+五、由操作系统/运行环境提供、未随本包分发
+ · Microsoft Edge WebView2 运行时（安装程序界面渲染用）—— 随 Windows / Microsoft Edge 提供，
+   不在本发行包内，其许可随该产品提供。
+ · 系统 schannel TLS 后端（Qt qschannelbackend.dll 调用系统 API）—— 属操作系统组件。
+
+六、本程序自身的许可、源码获取与待办
+ 1) 本程序整体以 GNU Affero General Public License v3.0（AGPL-3.0）分发。
+    完整条款见程序目录下的 LICENSE 文件，以及本目录下的 licenses\AGPL-3.0.txt。
+    本程序包含 AGPL-3.0（第二节第 4 项）与 GPL-3.0（第二节第 2 项）组件；
+    依 AGPL-3.0 第 13 条，AGPL-3.0 作品可与 GPL-3.0 作品组合为单一结合作品。
+    你可以在遵守相应许可证的前提下复制、修改、再分发本程序。
+
+ 2) 对应源代码的获取方式（含 AGPL-3.0 要求的 Corresponding Source 提供方式）：
+      源码仓库：https://github.com/TheForeverCSF/Standard-Processing-System
+    该仓库的 Releases 页面提供与本发行版本对应的源代码归档（Source code zip / tar.gz），
+    与二进制包位于同一位置、可直接下载、不再另行收费；
+    亦可通过 git 检出对应发行标签获取完整源码。
+    若上述地址暂时无法访问，可通过邮箱索取：the_forever_csf@126.com
+
+ 3) 本程序未取得 Qt / PyQt6 / PyMuPDF 的商业许可，因此上述 GPL / AGPL 义务均适用。
+    若日后取得商业许可，相应组件改按商业许可条款分发，届时需同步更新本节。
+ 4) Mesa（opengl32sw.dll）与 Microsoft VC++ 运行库的许可文本：Mesa 可从 Debian 源或 Qt 官方发行包取
+    （上游 gitlab.freedesktop.org 有反爬）；微软运行库按其可再发行条款分发，是否随包附条款请法务确认。
+ 5) Tesseract 安装包自身内嵌 Leptonica 等组件，其许可由该安装包提供；
+    如需完整清单，可解包核验后并入本目录。

@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>标准处理系统 安装程序</title>
+<style>
+/* ═══════════ 基础 ═══════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%}
+body{
+  font-family:"Microsoft YaHei UI","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+  font-size:13px;color:#e8eefc;background:#05070b;overflow:hidden;user-select:none;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(520px 300px at 12% -6%,rgba(59,130,246,.20),transparent 68%),
+    radial-gradient(460px 280px at 92% 4%,rgba(34,211,238,.13),transparent 70%),
+    radial-gradient(620px 420px at 50% 118%,rgba(37,99,235,.14),transparent 72%);
+}
+img,video{-webkit-user-drag:none}
+button,input{font-family:inherit;font-size:inherit;color:inherit;outline:none}
+a{color:#7cb0ff;text-decoration:none;cursor:pointer}
+a:hover{text-decoration:underline}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.13);border-radius:9px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.24);background-clip:content-box}
+
+/* ═══════════ 标题栏 ═══════════ */
+.titlebar{height:40px;display:flex;align-items:center;padding:0 6px 0 14px;position:relative;z-index:30}
+.tb-drag{flex:1;display:flex;align-items:center;gap:9px;height:100%;cursor:default}
+.tb-logo{width:18px;height:18px;flex:none;border-radius:5px;object-fit:contain;
+  filter:drop-shadow(0 0 7px rgba(59,130,246,.5))}
+.tb-logo.fallback{background:linear-gradient(135deg,#3b82f6,#22d3ee);box-shadow:0 0 12px rgba(59,130,246,.6)}
+.tb-title{font-size:12.5px;letter-spacing:.3px;color:#d5dfef}
+.tb-title i{font-style:normal;color:#6c7a91;margin-left:7px;font-size:11.5px}
+.tb-btns{display:flex;gap:2px}
+.tb-btn{width:38px;height:29px;border:0;background:transparent;border-radius:7px;cursor:pointer;
+  display:grid;place-items:center;color:#8b99ae;transition:background .15s,color .15s}
+.tb-btn:hover{background:rgba(255,255,255,.09);color:#fff}
+.tb-btn.close:hover{background:#e5484d;color:#fff}
+
+/* ═══════════ 屏幕容器 ═══════════ */
+#stage{position:relative;height:calc(100vh - 40px);z-index:10}
+.screen{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  opacity:0;visibility:hidden;pointer-events:none;transform:translateY(10px);
+  transition:opacity .38s cubic-bezier(.4,0,.2,1),transform .38s cubic-bezier(.4,0,.2,1),visibility .38s;
+}
+.screen.on{opacity:1;visibility:visible;pointer-events:auto;transform:none}
+
+/* ═══════════ 通用控件 ═══════════ */
+.btn{
+  height:38px;padding:0 20px;border:1px solid rgba(255,255,255,.1);border-radius:10px;
+  background:rgba(255,255,255,.05);cursor:pointer;font-size:13px;font-weight:500;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  transition:background .16s,border-color .16s,transform .16s,box-shadow .2s,opacity .16s;white-space:nowrap;
+}
+.btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18)}
+.btn:active{transform:translateY(1px)}
+.btn.lg{height:42px;padding:0 26px;font-size:13.5px}
+.btn.primary{
+  background:linear-gradient(135deg,#3b82f6,#2563eb);border-color:transparent;color:#fff;font-weight:600;
+  box-shadow:0 10px 26px -12px rgba(59,130,246,.95);
+}
+.btn.primary:hover{background:linear-gradient(135deg,#4f90ff,#2f6ef0);box-shadow:0 12px 30px -12px rgba(59,130,246,1)}
+.btn.ghost{background:transparent;border-color:rgba(255,255,255,.14);color:#b9c6d9}
+.btn.ghost:hover{background:rgba(255,255,255,.07);color:#fff}
+.btn.soft{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none}
+.btn.ok{background:linear-gradient(135deg,#10b981,#059669);border-color:transparent;color:#fff;font-weight:600;
+  box-shadow:0 10px 26px -12px rgba(16,185,129,.9)}
+/* 危险操作（如"信任未校验文件并提权运行"）用红色，避免和主操作混淆 */
+.btn.danger{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.5);color:#fca5a5}
+.btn.danger:hover{background:rgba(239,68,68,.24);color:#fff;border-color:rgba(239,68,68,.75)}
+.btn.shake{animation:shake .42s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+/* 开关 */
+.sw{appearance:none;width:38px;height:21px;border-radius:11px;background:rgba(255,255,255,.14);
+  position:relative;cursor:pointer;flex:none;transition:background .2s;border:0}
+.sw::after{content:"";position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;
+  background:#fff;transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.sw:checked{background:linear-gradient(135deg,#3b82f6,#2563eb)}
+.sw:checked::after{transform:translateX(17px)}
+.sw.cyan:checked{background:linear-gradient(135deg,#22d3ee,#0891b2)}
+
+/* 复选框 */
+.cb{appearance:none;width:17px;height:17px;border-radius:5px;border:1.5px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.04);cursor:pointer;flex:none;position:relative;transition:.18s}
+.cb:hover{border-color:rgba(255,255,255,.5)}
+.cb:checked{background:linear-gradient(135deg,#3b82f6,#2563eb);border-color:transparent}
+.cb:checked::after{content:"";position:absolute;left:5.4px;top:1.8px;width:4px;height:9px;
+  border:2px solid #fff;border-top:0;border-left:0;transform:rotate(43deg)}
+
+/* 输入框 */
+.input{
+  width:100%;height:38px;padding:0 13px;border-radius:10px;user-select:text;
+  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.11);color:#eaf1ff;
+  font-size:12.5px;transition:border-color .18s,background .18s,box-shadow .18s
+}
+.input:hover{border-color:rgba(255,255,255,.2)}
+.input:focus{border-color:#3b82f6;background:rgba(59,130,246,.08);box-shadow:0 0 0 3px rgba(59,130,246,.16)}
+
+/* 自定义提示气泡：延迟出现，且必须用户真正移动过鼠标后才允许显示
+   （窗口出现时鼠标若正停在按钮上，不会像原生 title 那样立刻弹字） */
+.tip{position:relative}
+.tip::after{
+  content:attr(data-tip);position:absolute;top:calc(100% + 9px);left:50%;z-index:60;
+  transform:translate(-50%,-3px);padding:5px 9px;border-radius:7px;white-space:nowrap;
+  font-size:11px;font-weight:400;letter-spacing:.2px;color:#dfe7f3;pointer-events:none;
+  background:rgba(18,24,34,.97);border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 12px 28px -12px rgba(0,0,0,.95);
+  opacity:0;transition:opacity .14s ease,transform .14s ease;   /* 隐藏不延迟 */
+}
+.tip:hover::after{opacity:1;transform:translate(-50%,0);transition-delay:.42s}  /* 显示延迟 */
+body:not(.mouse-moved) .tip:hover::after{opacity:0;transform:translate(-50%,-3px);transition-delay:0s}
+.tip-up::after{top:auto;bottom:calc(100% + 9px);left:auto;right:0;transform:translateY(3px);
+  white-space:normal;max-width:440px;line-height:1.55;text-align:center;word-break:break-all}
+.tip-up:hover::after{transform:translateY(0)}
+body:not(.mouse-moved) .tip-up:hover::after{transform:translateY(3px)}
+
+/* ═══════════ 开场欢迎层（覆盖内容区，随后淡出露出选项页） ═══════════ */
+.splash{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(620px 380px at 50% 44%,#0c1526,#05070b 72%);
+  transition:opacity .52s cubic-bezier(.4,0,.2,1),transform .52s cubic-bezier(.4,0,.2,1),visibility .52s;cursor:pointer}
+.splash.out{opacity:0;transform:scale(1.035);visibility:hidden;pointer-events:none}
+.sp-logo{width:122px;height:122px;opacity:0}
+.sp-logo img{width:100%;height:100%;object-fit:contain;
+  filter:drop-shadow(0 14px 38px rgba(59,130,246,.55)) drop-shadow(0 0 18px rgba(34,211,238,.28))}
+@keyframes spLogo{from{opacity:0;transform:scale(.8) translateY(12px)}to{opacity:1;transform:none}}
+.sp-title{margin-top:30px;font-size:23px;font-weight:600;letter-spacing:2.4px;color:#eef4ff;opacity:0}
+.sp-sub{margin-top:11px;font-size:12px;color:#7d8ba1;letter-spacing:.8px;opacity:0}
+.sp-sub span{color:#5f7ba6;margin-left:6px}
+.sp-line{margin-top:30px;width:136px;height:2px;border-radius:2px;background:rgba(255,255,255,.08);
+  overflow:hidden;opacity:0}
+.sp-line i{display:block;height:100%;width:0;border-radius:2px;
+  background:linear-gradient(90deg,#2563eb,#3b82f6 55%,#22d3ee)}
+.sp-tip{margin-top:16px;font-size:10.5px;color:#48566a;letter-spacing:.4px;opacity:0}
+/* 动画只在「窗口已显示」后加 .go 才挂上，保证用户能看到完整的开场 */
+.splash.go .sp-logo{animation:spLogo .78s cubic-bezier(.22,.9,.28,1) both}
+.splash.go .sp-title{animation:spUp .62s cubic-bezier(.22,.75,.3,1) .32s both}
+.splash.go .sp-sub{animation:spUp .62s cubic-bezier(.22,.75,.3,1) .44s both}
+.splash.go .sp-line{animation:spUp .5s ease .56s both}
+.splash.go .sp-line i{animation:spLoad 1.15s cubic-bezier(.4,0,.2,1) .58s both}
+.splash.go .sp-tip{animation:spUp .6s ease .80s both}
+@keyframes spUp{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:none}}
+@keyframes spLoad{from{width:0}to{width:100%}}
+
+/* ═══════════ 屏幕 2：安装中（视频 + 字幕） ═══════════ */
+#s-progress{overflow:hidden;background:#04060a}
+.pg-video{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#pgVideo{width:100%;max-height:100%;object-fit:contain;opacity:0;transition:opacity .8s;
+  filter:brightness(1.32) contrast(1.04)}
+#pgVideo.ready{opacity:1}
+.pg-vfb{position:absolute;inset:0;display:none;align-items:center;justify-content:center}
+.pg-vfb.on{display:flex}
+.pg-vfb img{width:56%;max-width:380px;opacity:.85;animation:pulse 3.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.62}50%{opacity:.95}}
+/* 视频播完但安装仍在继续时，改为展示本版本更新内容（不重复播放视频） */
+.pg-cl{position:absolute;inset:52px 44px 118px;z-index:4;display:none;flex-direction:column;gap:9px;
+  animation:softIn .5s ease both}
+.pg-cl.on{display:flex}
+.pg-cl-h{display:flex;align-items:center;gap:8px;flex:none;font-size:12.5px;color:#c8d5e6}
+.pg-cl-h .dot{width:5px;height:5px;flex:none;border-radius:50%;background:#3b82f6;box-shadow:0 0 8px #3b82f6}
+.pg-cl-h em{margin-left:auto;font-style:normal;font-size:11px;color:#6f7d93}
+.pg-cl .changelog{flex:1;min-height:0;max-height:none;font-size:12px}
+.pg-top{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.07);z-index:6}
+.pg-top i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2563eb,#3b82f6 55%,#22d3ee);
+  transition:width .3s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
+.pg-top i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  animation:shine 1.6s linear infinite}
+@keyframes shine{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.pg-bar{position:absolute;top:15px;left:18px;right:18px;display:flex;align-items:center;z-index:6}
+.pg-chip{display:flex;align-items:baseline;gap:2px;font-size:11.5px;color:#9fb0c6;
+  background:rgba(8,12,20,.55);border:1px solid rgba(255,255,255,.085);border-radius:20px;
+  padding:5px 13px;backdrop-filter:blur(9px)}
+.pg-chip b{font-size:15px;font-weight:500;color:#fff;font-variant-numeric:tabular-nums;margin-left:6px}
+.pg-chip em{font-style:normal;font-size:11px;color:#7cb0ff}
+.pg-tools{margin-left:auto;display:flex;gap:6px}
+.pg-tool{width:30px;height:30px;border-radius:9px;cursor:pointer;display:grid;place-items:center;
+  background:rgba(8,12,20,.55);border:1px solid rgba(255,255,255,.085);color:#a8b6ca;
+  backdrop-filter:blur(9px);transition:.16s}
+.pg-tool:hover{background:rgba(30,41,60,.8);color:#fff}
+.pg-tool.on{color:#8ab7ff;border-color:rgba(59,130,246,.5)}
+/* 底部字幕 */
+.pg-sub{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:46px 40px 18px;text-align:center;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(4,6,11,.66) 44%,rgba(4,6,11,.94))}
+.sub-task{font-size:15px;color:#fff;letter-spacing:.4px;min-height:22px;
+  text-shadow:0 2px 14px rgba(0,0,0,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub-task.waiting{animation:breathe 1.9s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.7}50%{opacity:1}}
+.sub-log{margin-top:9px;height:38px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:1px}
+.sub-log div{font-family:"Consolas","Microsoft YaHei UI",monospace;font-size:11.5px;line-height:18px;color:#7f8ea3;
+  text-shadow:0 2px 10px rgba(0,0,0,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  animation:subin .34s cubic-bezier(.4,0,.2,1)}
+.sub-log div:last-child{color:#cfdcec}
+@keyframes subin{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+/* 展开的完整日志 */
+.pg-log{position:absolute;left:0;right:0;bottom:112px;z-index:7;max-height:52%;display:none;flex-direction:column;
+  background:rgba(4,6,11,.93);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.09);
+  padding:10px 16px 12px;animation:subin .26s}
+.pg-log.on{display:flex}
+.pg-log-h{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:#7d8ba1;margin-bottom:7px}
+.pg-log-h button{border:0;background:transparent;color:#8b99ae;cursor:pointer;font-size:11.5px;padding:2px 8px;border-radius:6px}
+.pg-log-h button:hover{background:rgba(255,255,255,.08);color:#fff}
+#logBox{overflow-y:auto;flex:1;min-height:60px;font-family:Consolas,monospace;font-size:11px;line-height:1.7;
+  color:#93a3b8;user-select:text;white-space:pre-wrap;word-break:break-all}
+
+/* ═══════════ 屏幕 2：安装选项 ═══════════ */
+.sc-head{padding:6px 26px 12px;flex:none}
+.sc-head h2{font-size:18px;font-weight:600;letter-spacing:.4px;display:flex;align-items:center;gap:9px}
+.sc-head h2 .badge{font-size:10.5px;font-weight:500;color:#7cb0ff;background:rgba(59,130,246,.14);
+  border:1px solid rgba(59,130,246,.3);padding:2px 8px;border-radius:20px;letter-spacing:.2px}
+.sc-head p{margin-top:7px;font-size:12px;color:#8b99ae;line-height:1.65}
+.sc-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 26px 4px;min-height:0;display:flex;flex-direction:column}
+.end-note{margin-top:auto;padding:18px 2px 2px;font-size:11px;color:#5c6a7e;letter-spacing:.3px;
+  display:flex;justify-content:space-between;gap:12px;flex:none}
+.mini-list{display:flex;flex-wrap:wrap;gap:7px}
+.mini-list span{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#a6b4c8;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:6px 11px}
+.mini-list i{width:5px;height:5px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#22d3ee)}
+.block{margin-bottom:15px}
+.block-h{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#8593a8;letter-spacing:.6px;margin-bottom:9px;font-weight:500}
+.block-h .dot{width:5px;height:5px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#22d3ee)}
+.path-row{display:flex;gap:9px}
+.path-row .input{flex:1}
+
+/* 提示条 */
+.tips{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:11.5px;color:#7d8ba1;line-height:1.5}
+.tips .ico{flex:none;width:14px;height:14px;opacity:.75}
+.tips.warn{color:#f0b45e}
+.tips.warn .ico{opacity:1}
+.tips.ok{color:#4ecfa0}
+
+/* 选项卡片 */
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.opt{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;cursor:pointer;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+  border:1px solid rgba(255,255,255,.075);transition:border-color .18s,background .18s,transform .18s}
+.opt:hover{border-color:rgba(255,255,255,.16);transform:translateY(-1px)}
+.opt.checked{border-color:rgba(59,130,246,.42);background:linear-gradient(180deg,rgba(59,130,246,.13),rgba(59,130,246,.04))}
+.opt-ico{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;
+  background:rgba(255,255,255,.07);color:#9fb0c8}
+.opt.checked .opt-ico{background:rgba(59,130,246,.2);color:#8ab7ff}
+.opt-txt{flex:1;min-width:0}
+.opt-txt b{display:block;font-size:12.5px;font-weight:500;color:#e4ecfa}
+.opt-txt i{display:block;font-style:normal;font-size:11px;color:#7d8ba1;margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opt .sw{pointer-events:none}
+
+/* 高级设置折叠 */
+/* 高级设置入口：整行「下一页」式入口，点击后展开并向下滚动，让用户知道设置在下面 */
+.acc-h{width:100%;height:48px;padding:0 14px;border-radius:12px;border:1px solid rgba(255,255,255,.1);
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.018));
+  color:#d5dfef;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:12.5px;
+  transition:border-color .18s,background .18s,transform .18s}
+.acc-h:hover{border-color:rgba(59,130,246,.45);color:#fff;transform:translateY(-1px);
+  background:linear-gradient(180deg,rgba(59,130,246,.14),rgba(59,130,246,.04))}
+.acc-h .acc-ico{width:26px;height:26px;border-radius:9px;flex:none;display:grid;place-items:center;
+  background:rgba(255,255,255,.07);color:#9fb0c8;transition:background .18s,color .18s}
+.acc-h:hover .acc-ico{background:rgba(59,130,246,.22);color:#8ab7ff}
+.acc-h .acc-t{font-weight:500;flex:none}
+.acc-h .acc-sub{font-size:11px;color:#74839a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-h .acc-more{margin-left:auto;flex:none;display:flex;align-items:center;gap:5px;font-size:11.5px;color:#7cb0ff}
+.acc-h .acc-more svg{transition:transform .28s}
+.acc-h.open .acc-more svg{transform:rotate(180deg)}
+
+/* 内容未到底部的提示（滚动提示条） */
+.scroll-hint{position:sticky;bottom:0;z-index:3;margin-top:-4px;padding:24px 0 7px;flex:none;
+  display:none;align-items:flex-end;justify-content:center;gap:5px;pointer-events:none;
+  font-size:11px;color:#8492a8;
+  background:linear-gradient(180deg,transparent,rgba(5,7,11,.74) 42%,rgba(5,7,11,.98))}
+.scroll-hint.on{display:flex}
+.scroll-hint svg{animation:hintBob 1.5s ease-in-out infinite}
+@keyframes hintBob{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(3px);opacity:1}}
+.acc{max-height:0;overflow:hidden;transition:max-height .34s cubic-bezier(.4,0,.2,1)}
+.acc.open{max-height:1600px}
+.acc-inner{padding:12px 2px 2px}
+.g-title{font-size:11px;color:#6f7d93;letter-spacing:.7px;margin:12px 0 7px;font-weight:500}
+.g-title:first-child{margin-top:2px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:9px 13px;border-radius:10px;background:rgba(255,255,255,.028);
+  border:1px solid rgba(255,255,255,.055);margin-bottom:6px;cursor:pointer;transition:.16s}
+.row:hover{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.12)}
+.row span{font-size:12px;color:#d3dded}
+.g-note{font-size:11px;color:#6f7d93;line-height:1.6;padding:2px 4px 0;margin-bottom:4px}
+.seg{display:flex;gap:6px;padding:4px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+.seg button{flex:1;height:31px;border:0;border-radius:8px;background:transparent;color:#9aa8bd;cursor:pointer;font-size:12px;transition:.18s}
+.seg button:hover{background:rgba(255,255,255,.07);color:#e2eaf8}
+.seg button.on{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-weight:500;
+  box-shadow:0 6px 16px -8px rgba(59,130,246,.9)}
+.mini-toggle{margin-left:auto;border:0;background:transparent;color:#6f7d93;cursor:pointer;font-size:11px;
+  padding:2px 7px;border-radius:6px;transition:.15s;letter-spacing:0}
+.mini-toggle:hover{background:rgba(255,255,255,.07);color:#cfdbeb}
+.changelog{font-family:"Consolas","Microsoft YaHei UI",monospace;font-size:11.5px;line-height:1.75;color:#a7b5c9;
+  background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.06);border-radius:10px;
+  padding:12px 14px;max-height:146px;overflow:auto;white-space:pre-wrap;user-select:text;word-break:break-word;
+  transition:opacity .2s}
+.changelog.full{max-height:none}
+.changelog strong{color:#e8f0fb;font-weight:600}
+
+/* 底部栏 */
+.sc-foot{flex:none;padding:11px 26px 15px;border-top:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg,rgba(10,14,22,.4),rgba(6,9,14,.75))}
+.agree-row{display:flex;align-items:center;gap:9px;font-size:12px;color:#9aa8bd;cursor:pointer;margin-bottom:11px}
+.agree-row.err{color:#f0b45e}
+.agree-row.err .cb{border-color:#f0b45e}
+.foot-btns{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.foot-btns .hint{font-size:11px;color:#66748a}
+.foot-btns .right{display:flex;gap:10px;margin-left:auto}
+
+/* ── 首屏入场动画（窗口出现后由 JS 加 .enter 触发；重进本页会重播）── */
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes cardIn{from{opacity:0;transform:scale(.955)}to{opacity:1;transform:scale(1)}}
+@keyframes badgePop{0%{opacity:0;transform:scale(.66)}62%{opacity:1;transform:scale(1.09)}100%{opacity:1;transform:scale(1)}}
+@keyframes softIn{from{opacity:0}to{opacity:1}}
+#s-setup.on.enter .sc-head{animation:rise .5s cubic-bezier(.22,.75,.3,1) backwards}
+#s-setup.on.enter .sc-head .badge{animation:badgePop .55s cubic-bezier(.3,1.4,.6,1) .26s backwards}
+#s-setup.on.enter .sc-body > .block:nth-child(1){animation:rise .52s cubic-bezier(.22,.75,.3,1) .08s backwards}
+#s-setup.on.enter .sc-body > .block:nth-child(2){animation:rise .52s cubic-bezier(.22,.75,.3,1) .16s backwards}
+#s-setup.on.enter .sc-body > .block:nth-child(3){animation:rise .52s cubic-bezier(.22,.75,.3,1) .24s backwards}
+#s-setup.on.enter .sc-body > .block:nth-child(4){animation:rise .52s cubic-bezier(.22,.75,.3,1) .32s backwards}
+#s-setup.on.enter .sc-body > .block:nth-child(5){animation:rise .52s cubic-bezier(.22,.75,.3,1) .40s backwards}
+#s-setup.on.enter .sc-body > .end-note{animation:softIn .7s ease .55s backwards}
+#s-setup.on.enter .opt{animation:cardIn .44s cubic-bezier(.22,.75,.3,1) backwards}
+#s-setup.on.enter .opt-grid .opt:nth-child(1){animation-delay:.22s}
+#s-setup.on.enter .opt-grid .opt:nth-child(2){animation-delay:.30s}
+#s-setup.on.enter .opt-grid .opt:nth-child(3){animation-delay:.38s}
+#s-setup.on.enter .opt-grid .opt:nth-child(4){animation-delay:.46s}
+#s-setup.on.enter .sc-foot{animation:rise .5s cubic-bezier(.22,.75,.3,1) .20s backwards}
+#s-setup.on.enter .sc-foot .agree-row{animation:softIn .6s ease .34s backwards}
+#s-setup.on.enter .sc-foot .foot-btns{animation:rise .46s cubic-bezier(.22,.75,.3,1) .40s backwards}
+
+/* ═══════════ 屏幕 3：完成 ═══════════ */
+#s-finish{justify-content:center;padding:0 34px}
+.fn{text-align:center;max-width:560px;margin:0 auto;width:100%}
+.check{width:62px;height:62px;margin:0 auto 18px;display:block}
+.check circle{fill:none;stroke:url(#ckg);stroke-width:2.4;stroke-linecap:round;
+  stroke-dasharray:182;stroke-dashoffset:182;transition:stroke-dashoffset .85s cubic-bezier(.4,0,.2,1)}
+.check path{fill:none;stroke:#34d399;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:40;stroke-dashoffset:40;transition:stroke-dashoffset .5s .5s cubic-bezier(.4,0,.2,1)}
+.check.on circle{stroke-dashoffset:0}
+.check.on path{stroke-dashoffset:0}
+.fn h2{font-size:21px;font-weight:600;letter-spacing:.5px}
+.fn .sub{margin-top:9px;font-size:12.5px;color:#8b99ae;line-height:1.6}
+.summary{margin:20px 0 16px;border-radius:13px;border:1px solid rgba(255,255,255,.075);
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));text-align:left}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 15px;font-size:12px}
+.srow+.srow{border-top:1px solid rgba(255,255,255,.055)}
+.srow span{color:#8290a6}
+.srow b{font-weight:500;color:#e2eaf8;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:text}
+.srow b.ok{color:#4ecfa0}
+.srow b.bad{color:#f87171}
+.srow b.off{color:#66748a;font-weight:400}
+.launch{max-width:340px;margin:0 auto}
+
+/* ═══════════ 弹窗 ═══════════ */
+.mask{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+  background:rgba(3,5,9,.72);backdrop-filter:blur(7px);padding:40px 30px}
+.mask.on{display:flex;animation:fade .22s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.dialog{width:100%;max-width:460px;max-height:100%;display:flex;flex-direction:column;
+  border-radius:15px;background:#0c1119;border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.9);animation:pop .26s cubic-bezier(.34,1.4,.64,1)}
+.dialog.wide{max-width:600px}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 13px;
+  border-bottom:1px solid rgba(255,255,255,.075);font-size:13.5px;font-weight:500}
+.dlg-head .x{width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:#8b99ae;cursor:pointer;font-size:16px;line-height:1;transition:.15s}
+.dlg-head .x:hover{background:rgba(255,255,255,.09);color:#fff}
+.dlg-body{padding:16px 18px;font-size:12.5px;color:#a9b6c9;line-height:1.75;overflow:auto;user-select:text}
+.dlg-body.q{text-align:center;padding:26px 24px 22px}
+.dlg-body.q .big{font-size:15px;color:#e8eefc;margin-bottom:10px;font-weight:500}
+.dlg-foot{display:flex;align-items:center;gap:9px;padding:13px 18px 16px;border-top:1px solid rgba(255,255,255,.075)}
+.dlg-foot .sp{margin-left:auto}
+.agree-body{padding:0;background:rgba(0,0,0,.3);min-height:150px;max-height:none;flex:1}
+.agree-body img{display:block;width:100%}
+.path-hl{display:inline-block;margin-top:7px;padding:6px 10px;border-radius:8px;user-select:text;
+  background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.32);color:#9cc4ff;
+  font-family:Consolas,"Microsoft YaHei UI",monospace;font-size:11.5px;word-break:break-all}
+.errbox{margin:0;padding:16px 18px;max-height:280px;overflow:auto;user-select:text;
+  font-family:Consolas,"Microsoft YaHei UI",monospace;font-size:11.5px;line-height:1.7;
+  color:#f3b0b0;white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.28)}
+.agree-load{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  height:180px;color:#7d8ba1;font-size:12px}
+.spin{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.15);border-top-color:#3b82f6;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* 轻提示条 */
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);z-index:90;
+  padding:10px 18px;border-radius:11px;font-size:12.5px;color:#fff;background:rgba(20,26,36,.96);
+  border:1px solid rgba(255,255,255,.12);box-shadow:0 16px 40px -14px rgba(0,0,0,.9);
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:80%;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.err{border-color:rgba(229,72,77,.5);background:rgba(43,17,19,.96)}
+
+/* 内核异常遮罩 */
+#fatal{position:fixed;inset:0;z-index:120;display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;background:#05070b;text-align:center;padding:40px}
+#fatal.on{display:flex}
+#fatal h3{font-size:16px;font-weight:600}
+#fatal p{font-size:12.5px;color:#8b99ae;line-height:1.8;max-width:420px}
+</style>
+</head>
+<body>
+
+<!-- ══════ 标题栏（拖动区）══════ -->
+<div class="titlebar">
+  <div class="tb-drag pywebview-drag-region">
+    <img class="tb-logo" id="tbLogo" src="logo_标准处理系统.png" alt="" draggable="false">
+    <span class="tb-title">标准处理系统<i>安装程序</i></span>
+  </div>
+  <div class="tb-btns">
+    <button class="tb-btn tip" id="btnMin" data-tip="最小化" aria-label="最小化">
+      <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    </button>
+    <button class="tb-btn close tip" id="btnClose" data-tip="关闭" aria-label="关闭">
+      <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2.6 2.6l6.8 6.8M9.4 2.6l-6.8 6.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<div id="stage">
+
+  <!-- ══════ 屏幕 1：安装选项 ══════ -->
+  <section class="screen on" id="s-setup">
+    <div class="sc-head">
+      <h2>准备安装<span class="badge" id="verBadge">v2.0.0</span></h2>
+      <p id="setupSub">确认安装位置与选项，点击「立即安装」开始。</p>
+    </div>
+    <div class="sc-body" id="scBody">
+      <!-- 安装位置 -->
+      <div class="block">
+        <div class="block-h"><span class="dot"></span>安装位置</div>
+        <div class="path-row">
+          <input class="input" id="dirInput" spellcheck="false" autocomplete="off">
+          <button class="btn soft" id="btnBrowse">浏览…</button>
+        </div>
+        <div class="tips" id="dirTip">
+          <svg class="ico" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.4" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v3.6l2.2 1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          <span id="dirTipTxt">所需空间约 700 MB</span>
+        </div>
+      </div>
+
+      <!-- 安装选项 -->
+      <div class="block">
+        <div class="block-h"><span class="dot"></span>安装选项</div>
+        <div class="opt-grid">
+          <label class="opt" id="cardDesktop">
+            <span class="opt-ico">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1.6" y="2.6" width="12.8" height="8.6" rx="1.4" stroke="currentColor" stroke-width="1.2"/><path d="M5.4 13.6h5.2M8 11.2v2.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </span>
+            <span class="opt-txt"><b>桌面快捷方式</b><i>在桌面创建启动图标</i></span>
+            <input type="checkbox" class="sw" id="optDesktop">
+          </label>
+          <label class="opt" id="cardMenu">
+            <span class="opt-ico">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2.4 4.4h11.2M2.4 8h11.2M2.4 11.6h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </span>
+            <span class="opt-txt"><b>右键菜单</b><i>右键 PDF / Word / 文件夹直接处理</i></span>
+            <input type="checkbox" class="sw" id="optMenu">
+          </label>
+          <label class="opt" id="cardOcr">
+            <span class="opt-ico">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2.8 5.2V3.6c0-.44.36-.8.8-.8h1.6M10.8 2.8h1.6c.44 0 .8.36.8.8v1.6M13.2 10.8v1.6c0 .44-.36.8-.8.8h-1.6M5.2 13.2H3.6c-.44 0-.8-.36-.8-.8v-1.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M5.8 6.1h4.4M5.8 8h4.4M5.8 9.9h2.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+            </span>
+            <span class="opt-txt"><b>OCR 识别引擎</b><i id="ocrDesc">安装 Tesseract，识别扫描件</i></span>
+            <input type="checkbox" class="sw" id="optOcr">
+          </label>
+          <label class="opt" id="cardLaunch">
+            <span class="opt-ico">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M5 2.4l7.2 5.6L5 13.6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="opt-txt"><b>安装后启动</b><i>完成后立即打开程序</i></span>
+            <input type="checkbox" class="sw" id="optLaunch">
+          </label>
+        </div>
+      </div>
+
+      <!-- 高级设置（紧跟安装选项，避免被长内容挤到页底） -->
+      <div class="block">
+        <button class="acc-h" id="accToggle">
+          <span class="acc-ico">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 1.9v2.1M8 12v2.1M1.9 8H4M12 8h2.1M3.7 3.7L5.2 5.2M10.8 10.8l1.5 1.5M12.3 3.7L10.8 5.2M5.2 10.8l-1.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </span>
+          <span class="acc-t">高级设置</span>
+          <span class="acc-sub">主题 · 联网与安全 · 标准管理 · PDF 质量</span>
+          <span class="acc-more"><span class="acc-more-t">展开设置</span>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.4 4.2L6 7.8l3.6-3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </button>
+        <div class="acc" id="accBody">
+          <div class="acc-inner">
+            <div id="grpOld">
+              <div class="g-title">上一版本数据（检测到已安装的版本）</div>
+              <label class="row"><span>沿用上一版本的设置</span><input type="checkbox" class="sw" id="useOldSettings"></label>
+              <label class="row" id="rowOldDict"><span>沿用上一版本的标准名称词典</span><input type="checkbox" class="sw" id="useOldDict"></label>
+            </div>
+
+            <div class="g-title">处理</div>
+            <label class="row"><span>默认开启 OCR 识别图片中的文字</span><input type="checkbox" class="sw" id="ocrDefault"></label>
+            <label class="row"><span>默认启用双栏预览模式</span><input type="checkbox" class="sw" id="splitDefault"></label>
+            <label class="row"><span>自动切换深色 / 浅色主题</span><input type="checkbox" class="sw" id="autoTheme"></label>
+
+            <div class="g-title">联网与安全</div>
+            <label class="row"><span>处理完成后自动联网查询标准名称</span><input type="checkbox" class="sw" id="autoLookup"></label>
+            <label class="row"><span>安装后启用涉密模式（禁止本程序联网）</span><input type="checkbox" class="sw cyan" id="classifiedMode"></label>
+            <p class="g-note">涉密模式通过防火墙阻断本程序联网，需要管理员权限，可随时在程序设置中关闭。</p>
+
+            <div class="g-title">标准管理</div>
+            <label class="row"><span>高亮标记 Q/ 企业标准</span><input type="checkbox" class="sw" id="enableQHighlight"></label>
+            <label class="row"><span>将 Q/ 企业标准纳入识别与处理范围</span><input type="checkbox" class="sw" id="enableQStandard"></label>
+            <label class="row"><span>精准匹配年代号（年代不一致视为不同标准）</span><input type="checkbox" class="sw" id="preciseYear"></label>
+            <label class="row"><span>联网查询时忽略年代号（提高查到率）</span><input type="checkbox" class="sw" id="stripYear"></label>
+
+            <div class="g-title">PDF 渲染质量</div>
+            <div class="seg" id="segQuality">
+              <button data-v="speed">速度优先</button>
+              <button data-v="balanced" class="on">平衡模式</button>
+              <button data-v="quality">质量优先</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 本版本更新内容（直接展示） -->
+      <div class="block">
+        <div class="block-h">
+          <span class="dot"></span>本版本更新内容
+          <button class="mini-toggle" id="clToggle">展开全文 ∨</button>
+        </div>
+        <pre class="changelog" id="changelog">（未找到更新内容文件）</pre>
+      </div>
+
+      <!-- 安装内容 -->
+      <div class="block">
+        <div class="block-h"><span class="dot"></span>安装内容</div>
+        <div class="mini-list">
+          <span><i></i>主程序</span>
+          <span><i></i>Web 操作界面</span>
+          <span><i></i>标准名称字典</span>
+          <span><i></i>右键菜单集成</span>
+          <span><i></i>用户说明</span>
+          <span><i></i>卸载程序</span>
+        </div>
+      </div>
+
+      <div class="end-note">
+        <span>The Forever CSF</span>
+        <span id="footNote">标准处理系统</span>
+      </div>
+
+      <!-- 未滚到底时的指示：下面还有内容 -->
+      <div class="scroll-hint" id="scrollHint">
+        <span>下面还有内容</span>
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.4 4.2L6 7.8l3.6-3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <footer class="sc-foot">
+      <label class="agree-row" id="agreeRow">
+        <input type="checkbox" class="cb" id="agreeCheck">
+        <span>我已阅读 <a id="lnkAgreement">《标准处理系统 用户说明》</a></span>
+      </label>
+      <div class="foot-btns">
+        <button class="btn ghost" id="btnExit">退出</button>
+        <div class="right">
+          <span class="hint" id="footHint">需要管理员权限</span>
+          <button class="btn primary" id="btnInstall">立即安装</button>
+        </div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ══════ 屏幕 2：安装中（Logo 视频 + 字幕） ══════ -->
+  <section class="screen" id="s-progress">
+    <div class="pg-video">
+      <!-- 不写 loop：只播一遍，播完若安装未结束则由脚本改展示更新内容 -->
+      <video id="pgVideo" playsinline muted preload="auto" src="The Forever CSF.mp4"></video>
+      <div class="pg-vfb" id="pgVideoFallback"><img src="CSF徽标.png" alt="The Forever CSF"></div>
+    </div>
+
+    <!-- 视频播完但安装还没结束：不再重复播放，改为展示本版本更新内容 -->
+    <div class="pg-cl" id="pgCl">
+      <div class="pg-cl-h"><span class="dot"></span>本版本更新内容<em>视频已播完，安装仍在继续…</em></div>
+      <pre class="changelog" id="pgClBody">（未找到更新内容文件）</pre>
+    </div>
+
+    <div class="pg-top"><i id="pgBar"></i></div>
+    <div class="pg-bar">
+      <div class="pg-chip"><span id="pgStage">正在安装</span><b id="pgPct">0</b><em>%</em></div>
+      <div class="pg-tools">
+        <button class="pg-tool tip" id="btnSound" data-tip="开关声音" aria-label="开关声音">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8.6 2.6L5 5.6H2.6v4.8H5l3.6 3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path id="sndWave" d="M11 5.6a3.4 3.4 0 0 1 0 4.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="pg-tool tip" id="btnLog" data-tip="安装日志" aria-label="安装日志">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4.2h10M3 8h10M3 11.8h6.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="pg-log" id="pgLog">
+      <div class="pg-log-h"><span>安装日志</span><button id="btnLogClose">收起 ›</button></div>
+      <pre id="logBox"></pre>
+    </div>
+
+    <div class="pg-sub">
+      <div class="sub-task" id="pgTask">正在准备安装…</div>
+      <div class="sub-log" id="subLog"></div>
+    </div>
+  </section>
+
+  <!-- ══════ 屏幕 3：完成 ══════ -->
+  <section class="screen" id="s-finish">
+    <div class="fn">
+      <svg class="check" id="fnCheck" viewBox="0 0 64 64">
+        <defs><linearGradient id="ckg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+        <circle cx="32" cy="32" r="29"/>
+        <path d="M19 33.4l8.6 8.6L45 23.6"/>
+      </svg>
+      <h2>安装完成</h2>
+      <p class="sub" id="fnSub">标准处理系统 已成功安装到您的计算机</p>
+      <div class="summary" id="summary"></div>
+      <label class="row launch"><span>立即启动 标准处理系统</span><input type="checkbox" class="sw" id="launchNow" checked></label>
+      <div id="ocrManualWrap" style="margin-top:12px;display:none">
+        <button class="btn soft" id="btnOcrManual">手动安装 OCR 引擎</button>
+      </div>
+    </div>
+    <footer class="sc-foot" style="border-top:0;background:transparent;padding-bottom:20px">
+      <div class="foot-btns"><span class="hint" id="fnHint">© 2026 The Forever CSF</span>
+        <div class="right"><button class="btn ok lg" id="btnDone">完成</button></div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ══════ 开场欢迎层：先居中显示 logo 与欢迎词，再动画打开后面的内容 ══════ -->
+  <div class="splash" id="splash">
+    <div class="sp-logo"><img src="logo_标准处理系统.png" alt="标准处理系统" draggable="false"></div>
+    <div class="sp-title">欢迎使用 标准处理系统</div>
+    <div class="sp-sub">文档标准提取工具 · The Forever CSF<span id="spVer"></span></div>
+    <div class="sp-line"><i></i></div>
+    <div class="sp-tip">正在准备安装环境</div>
+  </div>
+</div>
+
+<!-- ══════ 用户说明弹窗 ══════ -->
+<div class="mask" id="mkAgreement">
+  <div class="dialog wide" style="max-height:calc(100vh - 60px)">
+    <div class="dlg-head">
+      <span>标准处理系统 用户说明</span>
+      <button class="x" data-close="mkAgreement">✕</button>
+    </div>
+    <div class="dlg-body agree-body" id="agreeBody">
+      <div class="agree-load"><div class="spin"></div><span>正在载入协议…</span></div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn ghost" id="btnAgreePdf">打开 PDF 原版</button>
+      <div class="sp"></div>
+      <button class="btn soft" data-close="mkAgreement">关闭</button>
+      <button class="btn primary" id="btnAgreeOk">我已阅读</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 未勾选「我已阅读」时的建议弹窗（不阻断：用户坚持继续就继续） ══════ -->
+<div class="mask" id="mkSuggestRead">
+  <div class="dialog" style="max-width:470px">
+    <div class="dlg-head">
+      <span>建议先阅读用户说明</span>
+      <button class="x" data-close="mkSuggestRead">✕</button>
+    </div>
+    <div class="dlg-body">
+      为了让你了解本软件的使用范围、隐私处理与免责事项，我们建议你先阅读一下<a id="lnkAgreement2">《标准处理系统 用户说明》</a>。<br><br>
+      当然，跳过也不影响安装，选择下面的「继续安装」即可。
+    </div>
+    <div class="dlg-foot">
+      <div class="sp"></div>
+      <button class="btn soft" id="btnSuggestGo">继续安装</button>
+      <button class="btn primary" id="btnSuggestRead">现在查看</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 目录不可写弹窗 ══════ -->
+<div class="mask" id="mkDir">
+  <div class="dialog">
+    <div class="dlg-head"><span>无法写入该目录</span><button class="x" data-close="mkDir">✕</button></div>
+    <div class="dlg-body q">
+      <div class="big">需要管理员权限</div>
+      <div id="dirErrMsg">当前目录需要管理员权限才能写入。</div>
+    </div>
+    <div class="dlg-foot">
+      <div class="sp"></div>
+      <button class="btn ghost" data-close="mkDir">取消</button>
+      <button class="btn primary" id="btnUseUserDir">改用用户目录安装</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 词典保留确认弹窗（即将删除用户积累的词典时必须先问，默认保留）══════ -->
+<div class="mask" id="mkKeepDict">
+  <div class="dialog">
+    <div class="dlg-head"><span>保留你的标准名称字典？</span><button class="x" data-close="mkKeepDict">✕</button></div>
+    <div class="dlg-body">
+      检测到已有的用户标准名称字典（<b>标准名称字典.db</b>），
+      但你关闭了高级设置里的「沿用上一版本的标准名称词典」。<br><br>
+      继续安装会<b>删除</b>这份词典，且无法恢复。安装程序会先自动备份到：<br>
+      <span class="path-hl" id="keepDictBackupPath">我的文档\标准处理系统备份</span>
+    </div>
+    <div class="dlg-foot">
+      <div class="sp"></div>
+      <button class="btn soft" id="btnDictDrop">不保留，继续安装</button>
+      <button class="btn primary" id="btnDictKeep">保留（推荐）</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 安装失败详情弹窗（不再只用 3 秒 toast）══════ -->
+<div class="mask" id="mkError">
+  <div class="dialog wide" style="max-height:calc(100vh - 60px)">
+    <div class="dlg-head"><span>安装失败</span><button class="x" data-close="mkError">✕</button></div>
+    <div class="dlg-body" style="padding:0">
+      <pre class="errbox" id="errText">安装失败</pre>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn soft" id="btnErrLog">查看安装日志</button>
+      <div class="sp"></div>
+      <button class="btn ghost" data-close="mkError">关闭</button>
+      <button class="btn primary" id="btnErrRetry">返回重试</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 信任未校验 OCR 安装包的二次确认 ══════ -->
+<div class="mask" id="mkTrustOcr">
+  <div class="dialog">
+    <div class="dlg-head"><span>确定信任这个文件吗？</span><button class="x" data-close="mkTrustOcr">✕</button></div>
+    <div class="dlg-body">
+      这个 OCR 安装包<b>未通过完整性校验</b>：它的内容和官方发布的文件不一致，
+      可能是被替换、重新打包或被篡改。<br><br>
+      安装时需要以<b>管理员权限</b>运行它，运行后该程序可以完全控制这台电脑，
+      风险由你自行承担。请只在你确信它来自可信来源时继续。<br><br>
+      <span class="path-hl" id="trustOcrPath"></span>
+    </div>
+    <div class="dlg-foot">
+      <div class="sp"></div>
+      <button class="btn ghost" data-close="mkTrustOcr">取消</button>
+      <button class="btn danger" id="btnTrustOcrOk">仍要运行</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 退出确认弹窗 ══════ -->
+<div class="mask" id="mkQuit">
+  <div class="dialog">
+    <div class="dlg-head"><span>退出安装</span><button class="x" data-close="mkQuit">✕</button></div>
+    <div class="dlg-body q">
+      <div class="big">确定要退出安装程序吗？</div>
+      <div id="quitMsg">未完成的安装不会对系统产生任何更改。</div>
+    </div>
+    <div class="dlg-foot">
+      <div class="sp"></div>
+      <button class="btn ghost" data-close="mkQuit">继续安装</button>
+      <button class="btn primary" id="btnQuitOk">退出</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="fatal">
+  <svg width="42" height="42" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.4" stroke="#f0b45e" stroke-width="1.4"/><path d="M12 7.4v5.4M12 16.4v.2" stroke="#f0b45e" stroke-width="1.6" stroke-linecap="round"/></svg>
+  <h3>界面内核未就绪</h3>
+  <p id="fatalMsg">未能与安装程序内核建立连接。<br>请关闭本窗口后重新运行安装程序。</p>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   标准处理系统 安装程序界面
+   通过 window.pywebview.api 与 Python 端通信
+   ═══════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var PREVIEW = /[?&]preview=1/.test(location.search);
+  var S = { app: null, cursor: 0, timer: null, installing: false, done: false };
+
+  /* ── 桥接 ── */
+  var bridge = {
+    call: function (fn) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      if (PREVIEW) return Promise.resolve(mock(fn, args));
+      var api = window.pywebview && window.pywebview.api;
+      if (!api || typeof api[fn] !== 'function') return Promise.reject(new Error('内核未就绪: ' + fn));
+      try { return Promise.resolve(api[fn].apply(api, args)); }
+      catch (e) { return Promise.reject(e); }
+    }
+  };
+
+  /* ── 标题栏应用图标：资源缺失时退回渐变方块 ── */
+  (function () {
+    var tb = $('tbLogo');
+    if (!tb) return;
+    function broken() {
+      tb.removeAttribute('src');
+      tb.classList.add('fallback');
+    }
+    if (tb.complete && tb.naturalWidth === 0) broken();
+    else tb.addEventListener('error', broken);
+  })();
+
+  /* ── 轻提示 ── */
+  var toastTimer = null;
+  function toast(msg, isErr) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = 'on' + (isErr ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = ''; }, 3200);
+  }
+
+  /* ── 屏幕切换 ── */
+  function go(id) {
+    var list = document.querySelectorAll('.screen');
+    for (var i = 0; i < list.length; i++) list[i].classList.toggle('on', list[i].id === id);
+  }
+
+  /* ── 弹窗 ── */
+  function openMask(id) { $(id).classList.add('on'); }
+  function closeMask(id) { $(id).classList.remove('on'); }
+  function onMaskClosed(id) {
+    // 说明文档不是"必须同意的用户协议"：关掉弹窗不做任何阻拦、也不标红。
+    // 没点「我已阅读」就保持未勾选，用户仍可直接点「立即安装」继续。
+    if (id === 'mkAgreement') {
+      $('agreeRow').classList.remove('err');
+    }
+  }
+  document.addEventListener('click', function (e) {
+    var c = e.target.getAttribute && e.target.getAttribute('data-close');
+    if (c) { closeMask(c); onMaskClosed(c); }
+  });
+
+  /* ══════ 安装中的 Logo 视频 ══════ */
+  /* 注意：视频元素初始位于隐藏屏幕上，浏览器可能推迟加载；因此
+     ① 静态徽标只作为「真正读不到视频」时的兜底覆盖，不隐藏视频元素本身；
+     ② 进入安装页时再强制 load + play 一次，加载成功即撤掉兜底。 */
+  var videoReady = false, videoBroken = false;
+  var videoPlayedFull = false;   // 是否已经完整播放过至少一轮
+  /* 视频本体 8 秒出头（实测 duration ≈ 8.06s）。播完后**先让最后一帧停一会儿**
+     再切换到更新内容：既保证整段播完，也让收尾画面有落脚点，不会看着像被切断。 */
+  var WAIT_TAIL_MS = 1500;       // 视频播完后停留多久再切到更新内容
+  var changelogTimer = null;
+  function cancelChangelogSwitch() {
+    clearTimeout(changelogTimer);
+    changelogTimer = null;
+  }
+  function initVideo() {
+    var v = $('pgVideo');
+    v.volume = 0.7;
+    v.addEventListener('loadeddata', function () {
+      videoReady = true;
+      videoBroken = false;
+      v.classList.add('ready');
+      $('pgVideoFallback').classList.remove('on');
+    });
+    v.addEventListener('error', function () { videoBroken = true; videoFallback(); });
+    v.addEventListener('timeupdate', function () {
+      if (v.duration && v.currentTime >= v.duration - 0.2) videoPlayedFull = true;
+    });
+    // 这一遍播完：安装已完成 → 交给完成流程；安装还在继续 → **不重复播放**，
+    // 改为把本版本更新内容展示出来，直到安装结束（用户不用再看第二遍视频）
+    v.addEventListener('ended', function () {
+      videoPlayedFull = true;
+      if (pendingFinish) { onVideoEnded(); return; }        // 只是差这一遍视频就进完成页
+      if (!S.installing || S.done) return;
+      cancelChangelogSwitch();
+      changelogTimer = setTimeout(function () {             // 整段播完后再停留一小会儿
+        changelogTimer = null;
+        if (pendingFinish) { onVideoEnded(); return; }      // 这期间装完了 → 走完成页
+        if (S.installing && !S.done) showChangelogWhileWaiting();
+      }, WAIT_TAIL_MS);
+    });
+    try { v.load(); } catch (e) {}          // 显式触发一次加载
+    setTimeout(retryVideo, 6000);           // 兜底：久未就绪则重载
+  }
+  function retryVideo() {
+    var v = $('pgVideo');
+    if (!v || videoReady) return;
+    try { v.load(); } catch (e) {}
+    setTimeout(function () {
+      if (!videoReady) { videoBroken = true; videoFallback(); }
+    }, 5000);
+  }
+  function videoFallback() {
+    if (videoReady) return;
+    $('pgVideoFallback').classList.add('on');   // 覆盖一层静态徽标，视频元素保留
+  }
+  /* 视频播完而安装仍未结束：不再重复播放视频，改为展示本版本更新内容 */
+  function showChangelogWhileWaiting() {
+    var v = $('pgVideo');
+    if (v) {
+      try { v.pause(); } catch (e) {}
+      v.classList.remove('ready');            // 视频淡出，露出背景
+    }
+    var cl = $('pgCl');
+    if (cl) cl.classList.add('on');
+    var body = $('pgClBody');
+    if (body) body.scrollTop = 0;             // 从"本版本更新内容"开头看起
+  }
+  /* 重新安装（或回到安装页）时把上一次的展示收起来 */
+  function hideChangelogWhileWaiting() {
+    var cl = $('pgCl');
+    if (cl) cl.classList.remove('on');
+    var v = $('pgVideo');
+    if (v && videoReady) v.classList.add('ready');
+  }
+  function playVideo() {
+    var v = $('pgVideo');
+    if (!v) return;
+    videoPlayedFull = false;
+    pendingFinish = null;
+    videoBroken = false;
+    $('pgTask').classList.remove('waiting');
+    $('pgVideoFallback').classList.remove('on');   // 进入安装页再试一次
+    hideChangelogWhileWaiting();                   // 重新安装时收起上次的更新内容展示
+    cancelChangelogSwitch();                       // 并撤掉上一次残留的延迟切换
+    v.loop = false;                       // **只播一遍**：播完还没装完就展示更新内容，不重复播放
+    v.muted = true;                       // 静音自动播放，用户可点右上角图标开声音
+    try { v.currentTime = 0; } catch (e) {}
+    if (v.readyState < 2) { try { v.load(); } catch (e) {} }
+    var p = v.play();
+    if (p && p.catch) {
+      p.catch(function () {
+        // 自动播放被拦截：等用户点一下再播；仍播不了才显示静态徽标
+        document.addEventListener('click', function once2() {
+          var q = v.play();
+          if (q && q.catch) q.catch(function () {});
+          document.removeEventListener('click', once2);
+        }, { once: true });
+        setTimeout(function () { if (v.paused) videoFallback(); }, 3000);
+      });
+    }
+  }
+  function stopVideo() {
+    var v = $('pgVideo');
+    try { v.pause(); } catch (e) {}
+  }
+  $('btnSound').addEventListener('click', function () {
+    var v = $('pgVideo');
+    v.muted = !v.muted;
+    if (!v.muted) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+    $('btnSound').classList.toggle('on', !v.muted);
+    $('sndWave').style.opacity = v.muted ? '.35' : '1';
+    toast(v.muted ? '已静音' : '已开启声音');
+  });
+
+  /* 更新内容渲染：只把 **加粗** 转成 <strong>，其余 markdown 语法一律按普通文本显示
+     （刻意不引入任何 markdown 依赖：只需这一条规则，多余语法保持原样更安全） */
+  function renderChangelog(text) {
+    var src = text == null || text === '' ? '（未找到更新内容文件）' : String(text);
+    var esc = src.replace(/[&<>]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c];
+    });
+    return esc.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  }
+
+  /* ══════ 安装选项页 ══════ */
+  function render(app) {
+    $('verBadge').textContent = 'v' + app.version;
+    $('footNote').textContent = (app.appName || '标准处理系统') + ' v' + app.version;
+    $('spVer').textContent = 'v' + app.version;
+    $('dirInput').value = app.defaultDir || '';
+    $('changelog').innerHTML = renderChangelog(app.changelog);
+    $('pgClBody').innerHTML = renderChangelog(app.changelog);   // 安装中的等待展示同一份内容
+
+    if (app.hasOld) {
+      $('setupSub').textContent = '检测到该目录已安装过本系统，将覆盖安装并保留您的数据。';
+      $('grpOld').style.display = '';
+      $('rowOldDict').style.display = app.hasOldDict ? '' : 'none';
+    } else {
+      $('grpOld').style.display = 'none';
+    }
+
+    if (app.tesseract && app.tesseract.installed) {
+      $('ocrDesc').textContent = '已检测到，无需重复安装';
+      $('optOcr').checked = false;
+    } else {
+      $('optOcr').checked = true;
+    }
+
+    ['optDesktop', 'optMenu', 'optLaunch'].forEach(function (id) { $(id).checked = true; });
+    var d = app.defaults || {};
+    ['ocrDefault', 'splitDefault', 'autoTheme', 'autoLookup', 'classifiedMode',
+     'enableQHighlight', 'enableQStandard', 'preciseYear', 'stripYear'].forEach(function (k) {
+      $(k).checked = !!d[k];
+    });
+    $('useOldSettings').checked = true;
+    $('useOldDict').checked = true;
+    setQuality((d.pdfQuality || 'balanced'));
+    syncCards();
+
+    setTimeout(function () { renderDirTip(app); }, 60);
+  }
+
+  function setQuality(v) {
+    var btns = $('segQuality').querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-v') === v);
+  }
+  function getQuality() {
+    var b = $('segQuality').querySelector('button.on');
+    return b ? b.getAttribute('data-v') : 'balanced';
+  }
+
+  function syncCards() {
+    [['cardDesktop', 'optDesktop'], ['cardMenu', 'optMenu'], ['cardOcr', 'optOcr'], ['cardLaunch', 'optLaunch']]
+      .forEach(function (pair) {
+        $(pair[0]).classList.toggle('checked', $(pair[1]).checked);
+      });
+  }
+  ['optDesktop', 'optMenu', 'optOcr', 'optLaunch'].forEach(function (id) {
+    $(id).addEventListener('change', syncCards);
+  });
+
+  /* 沿用上一版本设置 → 恢复旧值 / 还原默认值 */
+  var DEFAULTS = null, OLDVALS = null;
+  $('useOldSettings').addEventListener('change', function () {
+    var use = $('useOldSettings').checked;
+    var src = use ? (OLDVALS || {}) : (DEFAULTS || {});
+    ['ocrDefault', 'splitDefault', 'autoTheme', 'autoLookup', 'classifiedMode',
+     'enableQHighlight', 'enableQStandard', 'preciseYear', 'stripYear'].forEach(function (k) {
+      if (src[k] !== undefined) $(k).checked = !!src[k];
+    });
+    if (src.pdfQuality) setQuality(src.pdfQuality);
+  });
+
+  /* 安装位置提示 */
+  function renderDirTip(app) {
+    var txt = '所需空间约 700 MB · 安装完成后可在程序设置中调整';
+    $('dirTip').className = 'tips';
+    $('dirTipTxt').textContent = txt;
+  }
+  var dirTimer = null;
+  $('dirInput').addEventListener('input', function () {
+    clearTimeout(dirTimer);
+    dirTimer = setTimeout(checkDir, 420);
+  });
+  $('dirInput').addEventListener('blur', checkDir);
+
+  function checkDir() {
+    var dir = $('dirInput').value.trim();
+    if (!dir) return;
+    bridge.call('check_dir', dir).then(function (r) {
+      var cls = 'tips', msg;
+      if (r.hasOld) {
+        cls = 'tips ok';
+        msg = '该目录已安装过本系统，将覆盖安装并保留您的设置与词典';
+      } else if (!r.ok) {
+        cls = 'tips warn';
+        msg = r.message || '该目录当前不可写入';
+      } else {
+        msg = '所需空间约 700 MB · 安装完成后可在程序设置中调整';
+      }
+      $('dirTip').className = cls;
+      $('dirTipTxt').textContent = msg;
+    }).catch(function () {});
+  }
+
+  $('btnBrowse').addEventListener('click', function () {
+    bridge.call('browse_dir', $('dirInput').value.trim()).then(function (r) {
+      if (r && r.ok && r.path) { $('dirInput').value = r.path; checkDir(); }
+    }).catch(function (e) { toast('无法打开目录选择窗口：' + e.message, true); });
+  });
+
+  /* 内容区滚动提示：未滚到底部时提示「下面还有内容」 */
+  var scBody = $('scBody');
+  function updateScrollHint() {
+    if (!scBody) return;
+    var more = scBody.scrollHeight - scBody.scrollTop - scBody.clientHeight > 10;
+    $('scrollHint').classList.toggle('on', more);
+  }
+  scBody.addEventListener('scroll', updateScrollHint);
+  window.addEventListener('resize', updateScrollHint);
+
+  function scrollBodyTo(el, offset) {
+    var top = scBody.scrollTop + el.getBoundingClientRect().top
+              - scBody.getBoundingClientRect().top - (offset || 0);
+    scBody.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }
+
+  /* 高级设置：整行入口，点击展开并向下滚动，让用户看到下面的设置项 */
+  $('accToggle').addEventListener('click', function () {
+    var open = $('accBody').classList.toggle('open');
+    $('accToggle').classList.toggle('open', open);
+    $('accToggle').querySelector('.acc-more-t').textContent = open ? '收起设置' : '展开设置';
+    setTimeout(function () {
+      if (open) scrollBodyTo($('accToggle'), 6);
+      updateScrollHint();
+    }, 260);
+  });
+
+  /* 更新内容：默认直接展示，可一键展开全文 */
+  $('clToggle').addEventListener('click', function () {
+    var full = $('changelog').classList.toggle('full');
+    $('clToggle').textContent = full ? '收起 ∧' : '展开全文 ∨';
+    setTimeout(updateScrollHint, 260);
+  });
+
+  $('segQuality').addEventListener('click', function (e) {
+    if (e.target.tagName === 'BUTTON') setQuality(e.target.getAttribute('data-v'));
+  });
+
+  /* ══════ 用户说明 ══════ */
+  var agreeLoaded = false;
+  var pendingSuggestNext = null;   // 用户选择"跳过阅读、继续安装"后要执行的动作
+
+  function openAgreement() {
+    openMask('mkAgreement');
+    if (agreeLoaded) return;
+    agreeLoaded = true;
+    bridge.call('agreement_images').then(function (r) {
+      var box = $('agreeBody');
+      box.innerHTML = '';
+      if (r && r.ok && r.images && r.images.length) {
+        r.images.forEach(function (u) {
+          var img = document.createElement('img');
+          img.src = u;
+          img.draggable = false;
+          box.appendChild(img);
+        });
+      } else {
+        box.innerHTML = '<div class="agree-load"><span>' +
+          ((r && r.message) || '未能载入协议图片') + '<br>可点击下方「打开 PDF 原版」查看。</span></div>';
+      }
+    }).catch(function () {
+      $('agreeBody').innerHTML = '<div class="agree-load"><span>协议载入失败，可点击下方「打开 PDF 原版」查看。</span></div>';
+    });
+  }
+  $('lnkAgreement').addEventListener('click', function (e) { e.preventDefault(); openAgreement(); });
+  $('btnAgreeOk').addEventListener('click', function () {
+    // 读过了就顺手勾上「我已阅读」（自述即可，不做任何校验、不阻断）
+    $('agreeCheck').checked = true;
+    $('agreeRow').classList.remove('err');
+    closeMask('mkAgreement');
+  });
+  $('btnAgreePdf').addEventListener('click', function () {
+    bridge.call('open_agreement_pdf').then(function (r) {
+      if (!r || !r.ok) toast((r && r.message) || '未能打开协议文件', true);
+    }).catch(function () { toast('未能打开协议文件', true); });
+  });
+
+  /* ══════ 安装 ══════ */
+  function collect() {
+    return {
+      dir: $('dirInput').value.trim().replace(/^"|"$/g, ''),
+      desktopShortcut: $('optDesktop').checked,
+      contextMenu: $('optMenu').checked,
+      installOcr: $('optOcr').checked,
+      launchAfter: $('optLaunch').checked,
+      useOldSettings: $('useOldSettings').checked,
+      useOldDict: $('useOldDict').checked,
+      ocrDefault: $('ocrDefault').checked,
+      splitDefault: $('splitDefault').checked,
+      autoTheme: $('autoTheme').checked,
+      autoLookup: $('autoLookup').checked,
+      classifiedMode: $('classifiedMode').checked,
+      enableQHighlight: $('enableQHighlight').checked,
+      enableQStandard: $('enableQStandard').checked,
+      preciseYear: $('preciseYear').checked,
+      stripYear: $('stripYear').checked,
+      pdfQuality: getQuality()
+    };
+  }
+
+  /* 没勾「我已阅读」就点「立即安装」：只**建议**先读一下，绝不做成"必须同意才能装"。
+     用户选「继续安装」就直接继续，拒绝阅读也没关系。 */
+  function suggestReadBeforeInstall(next) {
+    pendingSuggestNext = next;
+    openMask('mkSuggestRead');
+  }
+
+  $('btnSuggestRead').addEventListener('click', function () {     // 现在查看
+    closeMask('mkSuggestRead');
+    pendingSuggestNext = null;
+    openAgreement();
+  });
+  $('btnSuggestGo').addEventListener('click', function () {       // 跳过阅读，继续安装
+    closeMask('mkSuggestRead');
+    var next = pendingSuggestNext;
+    pendingSuggestNext = null;
+    if (typeof next === 'function') next();
+  });
+  $('lnkAgreement2').addEventListener('click', function (e) {
+    e.preventDefault();
+    closeMask('mkSuggestRead');
+    pendingSuggestNext = null;
+    openAgreement();
+  });
+
+  $('agreeCheck').addEventListener('change', function () {
+    if ($('agreeCheck').checked) $('agreeRow').classList.remove('err');
+  });
+
+  /* 真正开始安装（check_dir 通过、且"删词典"这类风险已与用户确认后调用） */
+  function doInstall(opts) {
+    pendingInstall = null;
+    bridge.call('start_install', opts).then(function (r) {
+      if (!r || !r.ok) {
+        $('btnInstall').disabled = false;
+        if (r && r.code === 'eacces') { openMask('mkDir'); $('dirErrMsg').textContent = r.message || '需要管理员权限。'; }
+        else showInstallError((r && r.message) || '无法开始安装');
+        return;
+      }
+      S.installing = true;
+      S.cursor = 0;
+      $('logBox').textContent = '';
+      $('subLog').innerHTML = '';
+      $('pgTask').textContent = '正在准备安装…';
+      $('pgTask').classList.remove('waiting');
+      pendingFinish = null;
+      toggleLog(false);
+      go('s-progress');
+      playVideo();
+      poll();
+    }).catch(function (e) {
+      $('btnInstall').disabled = false;
+      showInstallError('无法开始安装：' + (e && e.message ? e.message : e));
+    });
+  }
+
+  function showInstallError(msg) {
+    $('errText').textContent = msg || '未知错误';
+    openMask('mkError');
+  }
+
+  function startInstallFlow() {
+    var opts = collect();
+    if (!opts.dir) { toast('请选择安装位置', true); return; }
+
+    $('btnInstall').disabled = true;
+    bridge.call('check_dir', opts.dir).then(function (chk) {
+      if (!chk || !chk.ok) {
+        $('btnInstall').disabled = false;
+        openMask('mkDir');
+        $('dirErrMsg').innerHTML = (chk && chk.message ? chk.message : '目标目录不可写入。') +
+          '<br><br>可改用当前用户目录：<br><span style="color:#8ab7ff">' + ((chk && chk.suggestDir) || '') + '</span>';
+        return;
+      }
+      opts.hasOld = !!chk.hasOld;
+      opts.hasOldDict = !!chk.hasOldDict;
+      // 会删掉用户积累的词典时，必须先弹窗确认（默认保留）
+      if (chk.hasOldDict && !opts.useOldDict) {
+        pendingInstall = opts;
+        if (S.app && S.app.backupRoot) $('keepDictBackupPath').textContent = S.app.backupRoot;
+        openMask('mkKeepDict');
+        return;
+      }
+      doInstall(opts);
+    }).catch(function (e) {
+      $('btnInstall').disabled = false;
+      showInstallError('无法开始安装：' + (e && e.message ? e.message : e));
+    });
+  }
+
+  $('btnInstall').addEventListener('click', function () {
+    // 未勾「我已阅读」：先建议阅读，用户坚持继续就继续（不阻断、不标红）
+    if (!$('agreeCheck').checked) { suggestReadBeforeInstall(startInstallFlow); return; }
+    startInstallFlow();
+  });
+
+  /* 「保留（推荐）」：把高级设置里的开关同步回"沿用"，按保留流程继续安装 */
+  $('btnDictKeep').addEventListener('click', function () {
+    closeMask('mkKeepDict');
+    $('useOldDict').checked = true;
+    if (pendingInstall) {
+      pendingInstall.useOldDict = true;
+      $('btnInstall').disabled = true;
+      doInstall(pendingInstall);
+    }
+  });
+
+  /* 「不保留」：用户明确知晓会删除（仍会先备份到我的文档），继续安装 */
+  $('btnDictDrop').addEventListener('click', function () {
+    closeMask('mkKeepDict');
+    if (pendingInstall) {
+      pendingInstall.useOldDict = false;
+      $('btnInstall').disabled = true;
+      doInstall(pendingInstall);
+    }
+  });
+  $('btnErrLog').addEventListener('click', function () {
+    closeMask('mkError');
+    go('s-progress');
+    toggleLog(true);
+  });
+  $('btnErrRetry').addEventListener('click', function () {
+    closeMask('mkError');
+    $('btnInstall').disabled = false;
+    go('s-setup');
+  });
+
+  $('btnUseUserDir').addEventListener('click', function () {
+    var u = $('dirErrMsg').querySelector('span');
+    if (u) $('dirInput').value = u.textContent.trim();
+    closeMask('mkDir');
+    toast('已切换到用户目录，请重新点击「立即安装」');
+  });
+
+  /* ══════ 进度轮询 ══════ */
+  function poll() {
+    clearInterval(S.timer);
+    S.timer = setInterval(function () {
+      bridge.call('progress', S.cursor).then(function (r) {
+        if (!r) return;
+        updateProgress(r);
+        if (r.logs && r.logs.length) appendLog(r.logs);
+        if (r.done) {
+          clearInterval(S.timer);
+          S.installing = false;
+          S.done = true;
+          if (r.error) {
+            stopVideo();
+            $('btnInstall').disabled = false;
+            go('s-setup');
+            showInstallError(r.error);      // 失败原因必须让用户看清（不是 3 秒 toast）
+          } else {
+            updateProgress(r);          // 先落到 100%
+            queueFinish(r);             // 等视频播完本轮再进入完成页
+          }
+        }
+      }).catch(function () {});
+    }, 220);
+  }
+
+  var STAGE_TEXT = {
+    prepare: '正在检查', extract: '正在释放文件', config: '正在配置系统',
+    ocr: '正在安装 OCR 引擎', done: '安装完成'
+  };
+
+  function updateProgress(r) {
+    var pct = Math.round((r.progress || 0) * 100);
+    $('pgPct').textContent = pct;
+    $('pgBar').style.width = pct + '%';
+    $('pgTask').textContent = r.status || '请稍候…';       // 字幕主行：当前任务
+    $('pgStage').textContent = STAGE_TEXT[r.stage] || '正在安装';
+  }
+
+  /* 日志：完整日志 + 底部字幕（保留最近两行） */
+  function appendLog(lines) {
+    var box = $('logBox');
+    var atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 24;
+    var sub = $('subLog');
+    lines.forEach(function (l) {
+      var d = document.createElement('div');
+      d.textContent = l;
+      box.appendChild(d);
+      var s = document.createElement('div');
+      s.textContent = l;
+      sub.appendChild(s);
+    });
+    while (sub.childNodes.length > 2) sub.removeChild(sub.firstChild);
+    if (atBottom) box.scrollTop = box.scrollHeight;
+  }
+
+  function toggleLog(open) {
+    var on = typeof open === 'boolean' ? open : !$('pgLog').classList.contains('on');
+    $('pgLog').classList.toggle('on', on);
+    $('btnLog').classList.toggle('on', on);
+    if (on) { var box = $('logBox'); box.scrollTop = box.scrollHeight; }
+  }
+  $('btnLog').addEventListener('click', function () { toggleLog(); });
+  $('btnLogClose').addEventListener('click', function () { toggleLog(false); });
+
+  /* ── 视频播完才进入完成页；安装先完成时底部字幕显示「最终智能优化中……」 ── */
+  var pendingFinish = null, videoWaitTimer = null, pendingInstall = null;
+
+  function queueFinish(r) {
+    pendingFinish = r;
+    var v = $('pgVideo');
+    // 视频缺失/出错/已完整播完一轮 → 直接进入完成页
+    if (!v || videoBroken || videoPlayedFull || v.readyState < 2 || !v.duration || v.ended) {
+      finishNow(420);
+      return;
+    }
+    $('pgTask').textContent = '最终智能优化中……';
+    $('pgTask').classList.add('waiting');
+    $('pgStage').textContent = '正在完成';
+    v.loop = false;                       // 本轮播完即停，触发 ended
+    v.addEventListener('ended', onVideoEnded);
+    // 兜底：ended 未触发（例如刚好在切换）也要继续进完成页 ——
+    // 但**绝不在画面还在推进时切走**：只要视频还在播就继续等，直到真的播完再做切换。
+    // （视频 8 秒出头，安装先完成时正是靠这一段保证整段放完，不会被切掉。）
+    function waitVideoReallyEnded() {
+      var vv = $('pgVideo');
+      var stillPlaying = vv && !vv.ended && !vv.paused && vv.duration &&
+                         vv.currentTime < vv.duration - 0.12;
+      if (stillPlaying) { videoWaitTimer = setTimeout(waitVideoReallyEnded, 400); return; }
+      onVideoEnded();
+    }
+    var left = Math.max(0, (v.duration - v.currentTime)) * 1000;
+    videoWaitTimer = setTimeout(waitVideoReallyEnded, left + 900);
+  }
+
+  function onVideoEnded() {
+    if (!pendingFinish) return;
+    clearTimeout(videoWaitTimer);
+    videoWaitTimer = null;
+    var v = $('pgVideo');
+    if (v) v.removeEventListener('ended', onVideoEnded);
+    finishNow(260);
+  }
+
+  function finishNow(delay) {
+    var r = pendingFinish;
+    pendingFinish = null;
+    var wait = delay || 300;
+    // 更新内容刚展示出来就装完了：留一点阅读时间，别一闪而过
+    var cl = $('pgCl');
+    if (cl && cl.classList.contains('on')) wait = Math.max(wait, 1200);
+    setTimeout(function () {
+      if (r) showFinish(r);
+    }, wait);
+  }
+
+  /* ══════ 完成 ══════ */
+  var OCR_TEXT = {
+    launched: '已启动安装程序（请在弹出的窗口中完成）',
+    skipped: '跳过（可稍后在程序设置中安装）',
+    not_found: '未找到安装包（可稍后在程序设置中安装）',
+    // 校验未通过不是"跳过"，必须说清真因：安装包内容与官方不一致，已阻止以管理员权限运行
+    untrusted: '未通过完整性校验，已阻止运行（安装包可能被替换或重新打包）',
+    failed: '启动失败（可手动安装）'
+  };
+  var FINISH = null;
+
+  function showFinish(r) {
+    FINISH = r;
+    stopVideo();
+    toggleLog(false);
+    $('pgTask').classList.remove('waiting');
+    var info = r.finishInfo || {};
+    // 三态如实上报：true=成功 / false=失败（红色）/ null=用户未选择
+    function tri(v, okText, failText) {
+      if (v === true) return [okText, 'ok'];
+      if (v === false) return [failText, 'bad'];
+      return ['未选择', 'off'];
+    }
+    var rows = [
+      ['安装位置', info.dir || '', ''],
+      ['桌面快捷方式'].concat(tri(info.desktop, '已创建', '创建失败')),
+      ['开始菜单快捷方式'].concat(tri(info.startMenu, '已创建', '创建失败')),
+      ['资源管理器右键菜单'].concat(tri(info.contextMenu, '已注册', '注册失败')),
+      ['卸载信息', info.uninstallReg === false ? '登记失败' : (info.uninstallReg ? '已登记' : '未登记'),
+        info.uninstallReg === false ? 'bad' : (info.uninstallReg ? 'ok' : 'off')],
+      ['OCR 识别引擎', OCR_TEXT[r.ocrState] || OCR_TEXT.skipped,
+        r.ocrState === 'launched' ? 'ok' : (r.ocrState === 'skipped' ? 'off' : 'bad')]
+    ];
+    if (info.backupDir) rows.push(['安装前备份', info.backupDir, '']);
+    var box = $('summary');
+    box.innerHTML = '';
+    rows.forEach(function (row) {
+      var d = document.createElement('div');
+      d.className = 'srow';
+      var s = document.createElement('span');
+      s.textContent = row[0];
+      var b = document.createElement('b');
+      b.textContent = row[1];
+      b.className = 'tip tip-up' + (row[2] ? ' ' + row[2] : '');
+      b.setAttribute('data-tip', row[1]);
+      d.appendChild(s); d.appendChild(b);
+      box.appendChild(d);
+    });
+    $('fnSub').textContent = '标准处理系统 ' + (S.app ? 'v' + S.app.version : '') + ' 已成功安装到您的计算机';
+    $('ocrManualWrap').style.display = r.ocrManualPath ? '' : 'none';
+    // 校验未通过时按钮语义变化：这是"我信任此文件"的显式出口（后端仍会二次确认记录）
+    var ocrUntrusted = r.ocrState === 'untrusted';
+    $('btnOcrManual').disabled = false;
+    $('btnOcrManual').textContent = ocrUntrusted ? '我信任此文件，仍要运行…' : '手动安装 OCR 引擎';
+    $('btnOcrManual').classList.toggle('danger', ocrUntrusted);
+    go('s-finish');
+    setTimeout(function () { $('fnCheck').classList.add('on'); }, 160);
+  }
+
+  /* 手动安装 OCR：校验没过时先给真因 + 二次确认，绝不静默当作"跳过" */
+  function runOcrManual(force) {
+    $('btnOcrManual').disabled = true;
+    bridge.call('install_ocr_manually', !!force).then(function (r) {
+      if (r && r.ok) {
+        $('btnOcrManual').textContent = 'OCR 安装程序已启动';
+        toast('已启动 OCR 安装程序');
+        return;
+      }
+      $('btnOcrManual').disabled = false;
+      if (r && r.untrusted) {
+        $('trustOcrPath').textContent = (FINISH && FINISH.ocrManualPath) || '';
+        openMask('mkTrustOcr');
+        toast('该安装包未通过完整性校验，请确认来源后再决定', true);
+        return;
+      }
+      toast((r && r.message) || '未能启动 OCR 安装程序', true);
+    }).catch(function () {
+      $('btnOcrManual').disabled = false;
+      toast('未能启动 OCR 安装程序', true);
+    });
+  }
+
+  $('btnOcrManual').addEventListener('click', function () {
+    if (FINISH && FINISH.ocrState === 'untrusted') {
+      $('trustOcrPath').textContent = FINISH.ocrManualPath || '';
+      openMask('mkTrustOcr');
+      return;
+    }
+    runOcrManual(false);
+  });
+  $('btnTrustOcrOk').addEventListener('click', function () {
+    closeMask('mkTrustOcr');
+    runOcrManual(true);
+  });
+
+  $('btnDone').addEventListener('click', function () {
+    var launch = $('launchNow').checked;
+    $('btnDone').disabled = true;
+    bridge.call('finish', launch).then(function () {
+      /* 窗口由 Python 端关闭 */
+    }).catch(function () {
+      $('btnDone').disabled = false;
+      toast('无法关闭窗口，请手动关闭', true);
+    });
+  });
+
+  /* ══════ 窗口按钮 ══════ */
+  $('btnMin').addEventListener('click', function () { bridge.call('minimize_window').catch(function () {}); });
+
+  function askQuit() {
+    if (S.installing) { toast('安装正在进行中，请等待完成'); return; }
+    $('quitMsg').textContent = S.done ? '安装已完成，退出安装程序不会影响已安装的内容。'
+      : '未完成的安装不会对系统产生任何更改。';
+    openMask('mkQuit');
+  }
+  $('btnClose').addEventListener('click', askQuit);
+  $('btnExit').addEventListener('click', askQuit);
+  $('btnQuitOk').addEventListener('click', function () {
+    closeMask('mkQuit');
+    bridge.call('close_window').catch(function () { window.close(); });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      var on = document.querySelector('.mask.on');
+      if (on && on.id !== 'mkQuit') { on.classList.remove('on'); onMaskClosed(on.id); }
+      return;
+    }
+    if (e.key === 'F5' || (e.ctrlKey && (e.key === 'r' || e.key === 'R' || e.key === 'p' || e.key === 'P'))) e.preventDefault();
+  });
+  document.addEventListener('contextmenu', function (e) {
+    if (!/INPUT|TEXTAREA/.test(e.target.tagName)) e.preventDefault();
+  });
+
+  /* 提示气泡门控：只有用户真正移动过鼠标后才允许显示
+     （窗口刚出现时鼠标可能正停在按钮上，不能立刻弹提示文字） */
+  document.body.classList.remove('mouse-moved');
+  document.addEventListener('mousemove', function once() {
+    document.body.classList.add('mouse-moved');
+    document.removeEventListener('mousemove', once);
+  }, { once: true });
+
+  /* ══════ 开场欢迎层：居中 logo + 欢迎词 → 动画打开后面的内容 ══════ */
+  var SPLASH_MS = 2000;          // logo/欢迎词展示时长（含动画）
+  var splashTimer = null, splashDone = false;
+
+  function startSplash() {
+    var sp = $('splash');
+    if (!sp) { finishSplash(); return; }
+    if (PREVIEW && location.hash.replace('#', '')) { finishSplash(); return; }  // 预览指定屏幕时不放
+    sp.addEventListener('click', finishSplash);      // 点击可跳过
+    // 窗口显示后再挂动画类，确保开场动画从头播放
+    setTimeout(function () { sp.classList.add('go'); }, 140);
+    splashTimer = setTimeout(finishSplash, SPLASH_MS);
+  }
+
+  function finishSplash() {
+    if (splashDone) return;
+    splashDone = true;
+    clearTimeout(splashTimer);
+    var sp = $('splash');
+    if (sp) {
+      sp.classList.add('out');                       // 淡出 + 轻微放大
+      setTimeout(function () {
+        if (sp.parentNode) sp.parentNode.removeChild(sp);
+      }, 660);
+    }
+    $('s-setup').classList.add('enter');             // 后面的内容同步入场
+    setTimeout(updateScrollHint, 540);
+  }
+
+  /* ══════ 启动 ══════ */
+  var booted = false;
+  function boot() {
+    if (booted) return;
+    booted = true;
+    bridge.call('get_state').then(function (app) {
+      S.app = app;
+      DEFAULTS = app.defaults || {};
+      OLDVALS = app.oldValues || {};
+      render(app);
+      initVideo();
+      if (PREVIEW) {
+        var target = location.hash.replace('#', '');
+        if (target) go('s-' + target);
+        if (target === 'progress') {
+          updateProgress({ progress: 0.42, status: '正在释放文件… (620 / 1400)', stage: 'extract' });
+          appendLog(['安装包: D:\\Standard Processing SystemV2.0.0.zip', '目标目录: C:\\Program Files\\标准处理系统']);
+          playVideo();
+        }
+        if (target === 'finish') {
+          showFinish({ finishInfo: { dir: 'C:\\Program Files\\标准处理系统', desktop: true, contextMenu: true },
+                       ocrState: 'launched' });
+        }
+      }
+      // 通知后端显示窗口；确认显示后播放开场欢迎动画，随后动画打开选项页
+      setTimeout(function () {
+        bridge.call('ui_ready').then(function () {
+          startSplash();
+        }).catch(function () { finishSplash(); });
+      }, 40);
+    }).catch(function (e) {
+      $('fatalMsg').innerHTML = '未能与安装程序内核建立连接。<br>' +
+        '<span style="color:#66748a;font-size:11px">' + (e && e.message ? e.message : e) + '</span>';
+      $('fatal').classList.add('on');
+      setTimeout(function () { bridge.call('close_window').catch(function () {}); }, 4000);
+    });
+  }
+
+  if (window.pywebview && window.pywebview.api) { boot(); }
+  else {
+    window.addEventListener('pywebviewready', boot);
+    // 内核就绪事件可能早于脚本执行，兜底轮询一次
+    var tries = 0;
+    var iv = setInterval(function () {
+      tries++;
+      if ((window.pywebview && window.pywebview.api) || PREVIEW) { clearInterval(iv); boot(); }
+      else if (tries > 40) { clearInterval(iv); boot(); }
+    }, 100);
+  }
+
+  /* ══════ 预览模式假数据（?preview=1，仅用于界面走查）══════ */
+  function mock(fn, args) {
+    var st = {
+      appName: '标准处理系统', version: '2.0.0', defaultDir: 'C:\\Program Files\\标准处理系统',
+      userDir: 'C:\\Users\\yurun\\标准处理系统', detectedDir: 'C:\\Program Files\\标准处理系统',
+      hasOld: true, hasOldDict: true, tesseract: { installed: true, path: 'C:\\Program Files\\Tesseract-OCR' },
+      admin: true, changelog: 'V1.2.1 → V2.0.0 更新内容\n\n一、支持的文档格式大幅扩展（重要）\n\t1. 可直接处理 Excel（.xlsx/.xlsm/.xls）、PowerPoint（.pptx/.pptm）、纯文本与表格文本（.txt/.csv/.tsv/.md/.log/.rtf）\n\t2. 打通全部入口：网页上传、选择文件、选择文件夹、拖拽、右键菜单\n\n二、标准前缀与识别范围（重要）\n\t1. 修复了"前缀开关看起来生效、实际不生效"的问题（TB/T、ISO、Q/CR 等）\n\t2. 设置页直接显示"实际生效前缀集合"\n\n三、不再出现"界面卡住不动"：页数后台统计、缓存复用\n\n四、结果展示与导出：导出跟随筛选；未查到标准名称会明确标注条数\n\n五、安全加固：pdf.js 4.10.38、Zip Slip、命令注入、OCR 安装包哈希校验、路径白名单、涉密模式权限\n\n六、数据与设置：用户数据统一迁移到 %LOCALAPPDATA%\\标准处理系统\n\n七、其它修复',
+      defaults: { ocrDefault: true, splitDefault: true, autoTheme: true, autoLookup: true, classifiedMode: false, enableQHighlight: false, enableQStandard: false, preciseYear: false, stripYear: false, pdfQuality: 'balanced' },
+      oldValues: { ocrDefault: true, splitDefault: false, autoTheme: true, autoLookup: false, classifiedMode: true, enableQHighlight: true, enableQStandard: false, preciseYear: true, stripYear: false, pdfQuality: 'quality' }
+    };
+    if (fn === 'get_state') return st;
+    if (fn === 'check_dir') return { ok: true, hasOld: true, hasOldDict: true, message: '', suggestDir: st.userDir };
+    if (fn === 'browse_dir') return { ok: true, path: 'D:\\软件\\标准处理系统' };
+    if (fn === 'agreement_images') return { ok: false, message: '预览模式：不加载真实协议图片' };
+    if (fn === 'progress') {
+      var n = (S.cursor || 0);
+      return { progress: 0.42, status: '正在释放文件… (620 / 1400)', stage: 'extract',
+        logs: n === 0 ? ['安装包: D:\\Standard Processing SystemV2.0.0.zip', '目标目录: C:\\Program Files\\标准处理系统', '共 1400 个文件需要释放'] : [],
+        cursor: n + 1, done: false, error: null, ocrState: 'skipped', finishInfo: {} };
+    }
+    if (fn === 'start_install') return { ok: true };
+    return { ok: true };
+  }
+})();
+</script>
+</body>
+</html>

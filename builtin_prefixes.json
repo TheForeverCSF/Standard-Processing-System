@@ -1,0 +1,169 @@
+{
+  "groups": {
+    "national": {
+      "label": "国家标准",
+      "enabled": true,
+      "prefixes": {
+        "GB": true,
+        "GB/T": true
+      }
+    },
+    "local": {
+      "label": "地方标准",
+      "enabled": true,
+      "prefixes": {
+        "DB": true
+      }
+    },
+    "industry": {
+      "label": "行业标准（76 类）",
+      "enabled": true,
+      "prefixes": {
+        "AQ": false,
+        "BB": false,
+        "CB": false,
+        "CH": false,
+        "CJ": false,
+        "CY": false,
+        "DA": false,
+        "DL": false,
+        "DY": false,
+        "DZ": false,
+        "EJ": false,
+        "FZ": false,
+        "GA": false,
+        "GC": false,
+        "GF": false,
+        "GH": false,
+        "GM": false,
+        "GY": false,
+        "HB": false,
+        "HG": false,
+        "HJ": false,
+        "HS": false,
+        "HY": false,
+        "JB": false,
+        "JC": false,
+        "JG": false,
+        "JR": false,
+        "JS": false,
+        "JT": false,
+        "JY": false,
+        "KA": false,
+        "LB": false,
+        "LD": false,
+        "LS": false,
+        "LY": false,
+        "MH": false,
+        "MR": false,
+        "MT": false,
+        "MZ": false,
+        "NB": false,
+        "NY": false,
+        "QB": false,
+        "QC": false,
+        "QJ": false,
+        "QX": false,
+        "RB": false,
+        "RF": false,
+        "SB": false,
+        "SC": false,
+        "SF": false,
+        "SH": false,
+        "SJ": false,
+        "SL": false,
+        "SN": false,
+        "SW": false,
+        "SY": false,
+        "TB": true,
+        "TD": false,
+        "TY": false,
+        "WB": false,
+        "WH": false,
+        "WJ": false,
+        "WM": false,
+        "WS": false,
+        "WW": false,
+        "XB": false,
+        "XF": false,
+        "YB": false,
+        "YC": false,
+        "YD": false,
+        "YJ": false,
+        "YS": false,
+        "YY": false,
+        "YZ": false,
+        "ZY": false,
+        "GJB": false,
+        "JGJ": false,
+        "JTG": false
+      }
+    },
+    "enterprise_rail": {
+      "label": "国铁集团企标",
+      "enabled": true,
+      "prefixes": {
+        "Q/CR": true
+      }
+    },
+    "enterprise": {
+      "label": "企业标准",
+      "enabled": false,
+      "prefixes": {
+        "Q/": false
+      }
+    },
+    "society": {
+      "label": "团体/学会标准",
+      "enabled": false,
+      "prefixes": {
+        "T/CRS": false,
+        "T/CRSC": false,
+        "T/CAMET": false,
+        "T/CREA": false
+      }
+    },
+    "european": {
+      "label": "欧洲标准",
+      "enabled": true,
+      "prefixes": {
+        "EU": true,
+        "EN": true
+      }
+    },
+    "international": {
+      "label": "国际标准",
+      "enabled": true,
+      "prefixes": {
+        "ISO": true,
+        "IEC": true,
+        "ASTM": true,
+        "IEEE": false,
+        "UL": false,
+        "DIN": false,
+        "JIS": true,
+        "MIL": false
+      }
+    },
+    "foreign": {
+      "label": "外国国家标准",
+      "enabled": false,
+      "prefixes": {
+        "BS": false,
+        "UNE": false,
+        "NF": false,
+        "KS": false,
+        "AS": false,
+        "CAN": false,
+        "ANSI": false
+      }
+    },
+    "special": {
+      "label": "其他特殊前缀",
+      "enabled": true,
+      "prefixes": {
+        "TJ": true
+      }
+    }
+  }
+}

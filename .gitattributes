@@ -1,0 +1,49 @@
+# ════════════════════════════════════════════════════════════════
+#  标准处理系统 — 文件属性
+# ════════════════════════════════════════════════════════════════
+#
+#  为什么需要这个文件：
+#    1. 二进制文件若被 Git 当作文本做换行转换，会导致文件损坏
+#       （PDF / 数据库 / 图片最容易被误判）。
+#    2. Windows 批处理脚本必须保持 CRLF 换行。用户直接从 GitHub
+#       下载 ZIP 时不会经过 Git 的换行转换，若仓库里存的是 LF，
+#       .bat 在部分环境下会解析异常（尤其是含标签跳转的脚本）。
+#       本文件用 eol=crlf 强制它在任何客户端检出时都是 CRLF。
+
+# ── 一、二进制文件：禁止换行转换与文本比对 ──────────────────────
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.ico     binary
+*.pdf     binary
+*.db      binary
+*.sqlite  binary
+*.exe     binary
+*.dll     binary
+*.mp4     binary
+*.zip     binary
+*.7z      binary
+*.ttf     binary
+*.otf     binary
+*.pfb     binary
+*.pfm     binary
+*.bcmap   binary
+
+# ── 二、必须保持 CRLF 的 Windows 脚本 ──────────────────────────
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+*.iss     text eol=crlf
+*.ps1     text eol=crlf
+
+# ── 三、文本文件：统一按文本处理 ────────────────────────────────
+*.py      text
+*.md      text
+*.html    text
+*.css     text
+*.js      text
+*.mjs     text
+*.json    text
+*.txt     text
+*.spec    text
+*.conf    text
+*.ini     text
